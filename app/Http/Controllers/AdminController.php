@@ -334,14 +334,12 @@ class AdminController extends Controller
     $categorySearch = $request->input('category_id');
     $data = [];
 
-    // If no search criteria provided, return empty result
     if (empty($countrySearch) && empty($nameSearch) && empty($categorySearch)) {
       return response()->json(['message' => 'No Result']);
     }
 
     $query = Owner::query();
 
-    // Filter by country
     if (!empty($countrySearch)) {
       $countryIds = Country::where('name', 'LIKE', "%{$countrySearch}%")
         ->pluck('id')
@@ -349,7 +347,6 @@ class AdminController extends Controller
       $query->whereIn('country_id', $countryIds);
     }
 
-    // Filter by user name
     if (!empty($nameSearch)) {
       $userIds = User::where('name', 'LIKE', "%{$nameSearch}%")
         ->pluck('id')
@@ -357,7 +354,6 @@ class AdminController extends Controller
       $query->whereIn('user_id', $userIds);
     }
 
-    // Filter by category
     if (!empty($categorySearch)) {
       $query->where('owner_category_id', $categorySearch);
     }
@@ -376,7 +372,6 @@ class AdminController extends Controller
         'country' => $country->name
       ];
 
-      // Add specific details based on category
       switch ($owner->owner_category_id) {
         case 1: // Accommodation
           $accommodation = Accommodation::query()->where('owner_id', $owner->id)->first();

@@ -84,7 +84,6 @@ class AccommodationController extends Controller
     if ($accommodation_type->name == "Hotel") {
       $rooms = Room::query()->where('accommodation_id', $accommodation->id)->get();
 
-      // جمع كل المستخدمين في Collection واحدة
       $allUsers = collect();
       foreach ($rooms as $room) {
         $customersIds = User_room::query()->where('room_id', $room->id)->pluck('user_id')->toArray();
@@ -313,7 +312,6 @@ class AccommodationController extends Controller
         $deletedPictureIds = json_decode($request->deleted_picture_ids, true);
     }
 
-    // حذف الصور المحذوفة
     if (!empty($deletedPictureIds)) {
         $deletedImages = Room_picture::whereIn('id', $deletedPictureIds)->get();
         foreach ($deletedImages as $deletedImage) {
@@ -323,7 +321,6 @@ class AccommodationController extends Controller
         }
     }
 
-    // حذف الصور التي لم يتم إدراجها في remaining_picture_ids
     $allOldImages = Room_picture::where('room_id', $id)->get();
     foreach ($allOldImages as $oldImage) {
         if (!in_array($oldImage->id, $remainingPictureIds)) {
@@ -333,7 +330,6 @@ class AccommodationController extends Controller
         }
     }
 
-    // إضافة الصور الجديدة
     if ($request->hasFile('images')) {
         foreach ($request->file('images') as $image) {
             $imagePath = $image->store('images', 'public');
@@ -371,7 +367,6 @@ class AccommodationController extends Controller
       ], 403);
     }
 
-    // حذف الصور من التخزين وقاعدة البيانات
     $pictures = Room_picture::query()->where('room_id', $room->id)->get();
     if (!$pictures->isEmpty()) {
       foreach ($pictures as $picture) {
