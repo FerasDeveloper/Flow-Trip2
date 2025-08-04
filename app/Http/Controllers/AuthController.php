@@ -48,10 +48,10 @@ class AuthController extends Controller
     \n\nThank you for registering at our site.\n\nBest regards.";
     Cache::put($user->id, $code, now()->addMinutes(3));
 
-    Mail::raw($emailBody, function ($message) use ($user) {
-        $message->to($user->email)
-                ->subject('Flow Trip - email verification');
-    });
+    // Mail::raw($emailBody, function ($message) use ($user) {
+    //     $message->to($user->email)
+    //             ->subject('Flow Trip - email verification');
+    // });
 
     if($user['role_id'] == 3){
         $user['token'] = $user->createToken('AccessToken')->plainTextToken;

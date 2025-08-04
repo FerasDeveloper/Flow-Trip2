@@ -9,13 +9,6 @@ return new class extends Migration
     /**
      * Run the migrations.
      */
-    public function up(): void
-    {
-        Schema::table('users', function($table){
-          $table->string('social_id')->nullable();
-          $table->string('social_type')->nullable();
-        });
-    }
 
     /**
      * Reverse the migrations.

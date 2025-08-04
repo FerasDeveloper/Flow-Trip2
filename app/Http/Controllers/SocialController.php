@@ -32,7 +32,7 @@ class SocialController extends Controller
           $new_user = User::query()->create([
             'name' => $user->name,
             'email' => $user->email,
-            'password' => Hash::make('my-google'),
+            // 'password' => Hash::make('my-google'),
             'phone_number' => $user->phone_number,
             'status' => 0,
             'role_id' => 3,

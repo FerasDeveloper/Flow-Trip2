@@ -87,13 +87,17 @@ use Illuminate\Support\Facades\Route;
   Route::get('/DeletePicture/{picture_id}', [GeneralTaskController::class, 'delete_picture']);
   Route::post('/AddService', [GeneralTaskController::class, 'add_service']);
   Route::get('/DeleteService/{service_id}', [GeneralTaskController::class, 'delete_service']);
+  Route::post('/EditProfile', [GeneralTaskController::class, 'edit_profile']);
 
   // Accommodation
   Route::get('/ShowAccommodationRecords', [AccommodationController::class, 'show_records']);
+  Route::get('/ShowOldAccommodationRecords', [AccommodationController::class, 'show_old_records']);
+  Route::get('/ShowPopularAccommodationRecords', [AccommodationController::class, 'show_popular_records']);
   Route::post('/FilterNameAccommodation', [AccommodationController::class, 'filter_name_accommodation']);
   Route::get('/ShowOffers', [AccommodationController::class, 'show_offers']);
   Route::get('/ShowAllRooms', [AccommodationController::class, 'show_all_rooms']);
   Route::get('/ShowRoomRecords/{id}', [AccommodationController::class, 'show_room_records']);
+  Route::get('/ShowOldRoomRecords/{id}', [AccommodationController::class, 'show_old_room_records']);
   Route::get('/ShowRoom/{id}', [AccommodationController::class, 'show_room']);
   Route::post('/AddRoom', [AccommodationController::class, 'add_room']);
   Route::post('/EditRoom/{id}', [AccommodationController::class, 'edit_room']);

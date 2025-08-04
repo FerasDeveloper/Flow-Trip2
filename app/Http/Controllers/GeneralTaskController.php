@@ -26,6 +26,8 @@ use App\Models\Vehicle;
 use App\Models\Vehicle_owner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class GeneralTaskController extends Controller
 {
@@ -240,6 +242,7 @@ class GeneralTaskController extends Controller
   public function add_service(Request $request)
   {
     $user = Auth::user();
+    Log::info('AddService request', ['user' => $user, 'services' => $request->services]);
 
     if ($user['role_id'] != 4) {
       return response()->json([
@@ -249,17 +252,24 @@ class GeneralTaskController extends Controller
     $owner = Owner::query()->where('user_id', $user->id)->first();
 
     $request->validate([
-      'service' => 'required',
+      'services' => 'required',
     ]);
 
-    $service = Service::firstOrCreate([
-      'name' => $request['service']
-    ]);
+    $services = $request->input('services');
 
-    $owner_service = Owner_service::query()->create([
-      'service_id' => $service->id,
-      'owner_id' => $owner->id,
-    ]);
+    foreach($services as $service){
+      $service = Service::firstOrCreate([
+        'name' => $service
+      ]);
+
+      $owner_service = Owner_service::query()->where('service_id', $service->id)->where('owner_id', $owner->id)->first();
+      if(!isset($owner_service)){
+        Owner_service::query()->create([
+          'service_id' => $service->id,
+          'owner_id' => $owner->id,
+        ]);
+      }
+    }
 
     return response()->json([
       'message' => 'new service added successfully',
@@ -277,13 +287,73 @@ class GeneralTaskController extends Controller
         'message' => 'Authorization required'
       ]);
     }
+    
     $owner = Owner::query()->where('user_id', $user->id)->first();
-    $service = Service::query()->where('id', $id)->first();
-    $owner_service = Owner_service::query()->where('service_id', $service->id)
+    Owner_service::query()->where('service_id', $id)
       ->where('owner_id', $owner->id)->delete();
 
     return response()->json([
       'message' => 'this service deleted successfully',
     ]);
   }
+
+  public function edit_profile(Request $request){
+    $user = User::find(Auth::id());
+    $owner = Owner::query()->where('user_id', $user->id)->first();
+
+    $user->update([
+      'name' => $request->name,
+      'email' => $request->email,
+      'phone_number' => $request->phone_number,
+    ]);
+    $owner->update([
+      'description' => $request->description,
+      'location' => $request->location,
+      'country_id' => $request->country_id,
+    ]);
+
+    $remainingPictureIds = [];
+    $deletedPictureIds = [];
+
+    if ($request->has('remaining_picture_ids')) {
+        $remainingPictureIds = json_decode($request->remaining_picture_ids, true);
+    }
+
+    if ($request->has('deleted_picture_ids')) {
+        $deletedPictureIds = json_decode($request->deleted_picture_ids, true);
+    }
+
+    if (!empty($deletedPictureIds)) {
+        $deletedImages = Picture::whereIn('id', $deletedPictureIds)->get();
+        foreach ($deletedImages as $deletedImage) {
+            $fileName = basename($deletedImage->room_picture);
+            Storage::disk('public')->delete("images/{$fileName}");
+            $deletedImage->delete();
+        }
+    }
+
+    $allOldImages = Picture::where('owner_id', $owner->id)->get();
+    foreach ($allOldImages as $oldImage) {
+        if (!in_array($oldImage->id, $remainingPictureIds)) {
+            $fileName = basename($oldImage->room_picture);
+            Storage::disk('public')->delete("images/{$fileName}");
+            $oldImage->delete();
+        }
+    }
+
+    if ($request->hasFile('images')) {
+        foreach ($request->file('images') as $image) {
+            $imagePath = $image->store('images', 'public');
+            Picture::query()->create([
+                'owner_id' => $owner->id,
+                'reference' => 'storage/' . $imagePath
+            ]);
+        }
+    }
+
+    return response()->json([
+        'message' => 'Profile updated successfully'
+    ]);
+  }
+  
 }
