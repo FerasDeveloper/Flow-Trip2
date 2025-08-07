@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Mail;
 
 class AuthController extends Controller
 {
+  
   public function user_Register(Request $request): \Illuminate\Http\JsonResponse
   {
     $request->validate([
@@ -25,22 +26,22 @@ class AuthController extends Controller
     $code = rand(111111, 999999);
 
     if($request->phone_number != null){
-    $user = User::query()->create([
-      'name' => $request['name'],
-      'email' => $request['email'],
-      'password' => $request['password'],
-      'phone_number' => $request['phone_number'],
-      'role_id' => $request['role_id'],
-    ]);
-  }
-  else{
-    $user = User::query()->create([
-      'name' => $request['name'],
-      'email' => $request['email'],
-      'password' => $request['password'],
-      'role_id' => $request['role_id'],
-    ]);
-  }
+      $user = User::query()->create([
+        'name' => $request['name'],
+        'email' => $request['email'],
+        'password' => $request['password'],
+        'phone_number' => $request['phone_number'],
+        'role_id' => $request['role_id'],
+      ]);
+    }
+    else{
+      $user = User::query()->create([
+        'name' => $request['name'],
+        'email' => $request['email'],
+        'password' => $request['password'],
+        'role_id' => $request['role_id'],
+      ]);
+    }
     $emailBody = "Hello {$user->name}!
     \n\nWelcome to FlowTrip! There is just one more step befor you reach the site.
     \nverify your email address by this verification code:
@@ -48,10 +49,10 @@ class AuthController extends Controller
     \n\nThank you for registering at our site.\n\nBest regards.";
     Cache::put($user->id, $code, now()->addMinutes(3));
 
-    // Mail::raw($emailBody, function ($message) use ($user) {
-    //     $message->to($user->email)
-    //             ->subject('Flow Trip - email verification');
-    // });
+    Mail::raw($emailBody, function ($message) use ($user) {
+        $message->to($user->email)
+                ->subject('Flow Trip - email verification');
+    });
 
     if($user['role_id'] == 3){
         $user['token'] = $user->createToken('AccessToken')->plainTextToken;

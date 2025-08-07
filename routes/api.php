@@ -24,8 +24,8 @@ use Illuminate\Support\Facades\Route;
 
   Route::middleware('auth:sanctum')->group(function () {
 
-    // Owner Id
-    Route::get('/WhoAmI', [GeneralTaskController::class, 'who_am_i']);
+  // Owner Id
+  Route::get('/WhoAmI', [GeneralTaskController::class, 'who_am_i']);
 
 
   Route::get('/Logout', [AuthController::class, 'logout']);

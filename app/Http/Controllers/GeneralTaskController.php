@@ -120,9 +120,10 @@ class GeneralTaskController extends Controller
     $owner = Owner::query()->where('user_id', $id)->first();
     $data['owner'] = $owner;
     $owner['user'] = User::query()->where('id', $owner->user_id)->first();
-    $country = Country::query()->where('id', $owner->country_id)->select('name')->first();
+    $country = Country::query()->where('id', $owner->country_id)->first();
     $category = Owner_category::query()->where('id', $owner->owner_category_id)->select('name')->first();
     $owner['country'] = $country->name;
+    $owner['countryId'] = $country->id;
     $owner['category'] = $category->name;
 
     $category_id = $owner->owner_category_id;
