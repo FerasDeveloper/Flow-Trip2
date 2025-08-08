@@ -67,7 +67,11 @@ class AdminController extends Controller
 
   public function admin_search(AdminRequest $request)
   {
-    $data = $request->validated();
+    $data = array_merge([
+      'country'     => null,
+      'name'        => null,
+      'category_id' => null,
+    ], $request->validated());
     return $this->adminService->admin_search($data);
   }
 

@@ -92,6 +92,7 @@ use Illuminate\Support\Facades\Route;
   // Accommodation
   Route::get('/ShowAccommodationRecords', [AccommodationController::class, 'show_records']);
   Route::get('/ShowOldAccommodationRecords', [AccommodationController::class, 'show_old_records']);
+  Route::get('/ShowNewAccommodationRecords', [AccommodationController::class, 'show_new_records']);
   Route::get('/ShowPopularAccommodationRecords', [AccommodationController::class, 'show_popular_records']);
   Route::post('/FilterNameAccommodation', [AccommodationController::class, 'filter_name_accommodation']);
   Route::get('/ShowOffers', [AccommodationController::class, 'show_offers']);

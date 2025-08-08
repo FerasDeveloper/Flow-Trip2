@@ -97,6 +97,11 @@ class AccommodationController extends Controller
     return $this->service->show_old_records();
   }
 
+  public function show_new_records()
+  {
+    return $this->service->show_new_records();
+  }
+
   public function show_popular_records()
   {
     return $this->service->show_popular_records();

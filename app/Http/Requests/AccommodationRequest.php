@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class AccommodationRequest extends FormRequest
 {
@@ -40,7 +41,13 @@ class AccommodationRequest extends FormRequest
           'area' => 'required|numeric|min:1',
           'people_count' => 'required|integer|min:1',
           'description' => 'required',
-          'room_number' => 'required|numeric'
+          'room_number'  => [
+            'required',
+            'numeric',
+            Rule::unique('rooms', 'room_number')
+              ->ignore($this->route('id'))
+          ],
+
         ];
 
       default:
@@ -61,10 +68,14 @@ class AccommodationRequest extends FormRequest
 
       case 'edit_room':
         return [
+          'room_number.unique' => 'There is another room with this room number',
           'price.min' => 'The price must be a positive value greater than zero.',
           'area.min' => 'The area must be a positive value greater than zero.',
           'people_count.min' => 'The number of people must be a positive value greater than zero.',
         ];
+
+      default:
+        return [];
     }
   }
 }
