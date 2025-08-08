@@ -78,17 +78,23 @@ class AirLineController extends Controller
     $request->validate([
       'plane_type_id' => 'required',
       'seats_count' => 'required',
-      'plane_shape_diagram' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+      'plane_shape_diagram' => 'nullable|image|mimes:jpg,jpeg,png|max:2048',
       'status' => 'required',
     ]);
-    $image = $request->file('plane_shape_diagram');
-    $imageName = time() . '_' . $image->getClientOriginalName();
-    $image->storeAs('public/plane_shape_diagram', $imageName);
+
+    if ($request->hasFile('plane_shape_diagram')) {
+        $image = $request->file('plane_shape_diagram');
+        $imageName = time() . '_' . $image->getClientOriginalName();
+        $image->storeAs('public/plane_shape_diagram', $imageName);
+        
+        $plane = Plane::query()->where('id', $id)->update([
+          'plane_shape_diagram' => $imageName,
+        ]);
+    }
 
     $plane = Plane::query()->where('id', $id)->update([
       'plane_type_id' => $request['plane_type_id'],
       'seats_count' => $request['seats_count'],
-      'plane_shape_diagram' => $imageName,
       'status' => $request['status'],
     ]);
 
@@ -236,6 +242,7 @@ class AirLineController extends Controller
 
     return response()->json([
       'message' => 'new flight added successfully',
+      'flight_id' => $flight->id,
     ]);
   }
 
