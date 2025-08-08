@@ -30,9 +30,7 @@ class AccommodationService
     $data = [];
 
     if ($accommodation == null) {
-      return response()->json([
-        'message' => 'Something went wrong'
-      ]);
+      return ['message' => 'Something went wrong'];
     }
 
     if ($accommodation_type->name == "Hotel") {
@@ -55,7 +53,7 @@ class AccommodationService
 
       $data['filtered_users'] = $filteredUsers;
 
-      return response()->json($data);
+      return $data;
     } else {
       $user_accommodations = User_accommodation::query()->where('accommodation_id', $accommodation->id)->pluck('user_id')->toArray();
       $users = User::query()->whereIn('id', $user_accommodations)->get();
@@ -67,7 +65,7 @@ class AccommodationService
         $filteredUsers = $users->values();
       }
       $data['filtered_users'] = $filteredUsers;
-      return response()->json($data);
+      return $data;
     }
   }
 
@@ -79,9 +77,7 @@ class AccommodationService
     $rooms = Room::query()->where('accommodation_id', $accommodation->id)->get();
 
     if ($rooms->isEmpty()) {
-      return response()->json([
-        'message' => "There is no offers"
-      ]);
+      return ['message' => "There is no offers"];
     }
 
     $offers = [];
@@ -90,9 +86,7 @@ class AccommodationService
         $offers[] = $room;
       }
     }
-    return response()->json([
-      'offers' => $offers
-    ]);
+    return ['offers' => $offers];
   }
 
   public function show_all_rooms()
@@ -102,13 +96,9 @@ class AccommodationService
     $accommodation = Accommodation::query()->where('owner_id', $owner->id)->first();
     $rooms = Room::query()->where('accommodation_id', $accommodation->id)->get();
     if ($rooms->isEmpty()) {
-      return response()->json([
-        'message' => "There is no rooms"
-      ]);
+      return ['message' => "There is no rooms"];
     }
-    return response()->json([
-      'data' => $rooms
-    ]);
+    return ['data' => $rooms];
   }
 
   public function add_room($request, $images)
@@ -118,9 +108,7 @@ class AccommodationService
     $accommodation = Accommodation::query()->where('owner_id', $owner->id)->first();
 
     if ($accommodation == null) {
-      return response()->json([
-        'message' => 'Something went wrong'
-      ]);
+      return ['message' => 'Something went wrong'];
     }
 
     $room = Room::query()->create([
@@ -141,9 +129,7 @@ class AccommodationService
         ]);
       }
     }
-    return response()->json([
-      'message' => 'Room added successfully'
-    ]);
+    return ['message' => 'Room added successfully'];
   }
 
   public function show_room($id)
@@ -151,16 +137,14 @@ class AccommodationService
     $room = Room::query()->where('id', $id)->first();
 
     if ($room == null) {
-      return response()->json([
-        'message' => "Somthing went wrong"
-      ]);
+      return ['message' => "Somthing went wrong"];
     }
 
     $pictures = Room_picture::query()->where('room_id', $id)->get();
-    return response()->json([
+    return [
       'room' => $room,
       'pictures' => $pictures
-    ]);
+    ];
   }
 
   public function edit_room($request, $remainingPictureIds, $deletedPictureIds, $images, $offer_price, $id)
@@ -168,9 +152,7 @@ class AccommodationService
     $room = Room::query()->where('id', $id)->first();
 
     if (!$room) {
-      return response()->json([
-        'message' => 'Room not found'
-      ], 404);
+      return ['message' => 'Room not found'];
     }
 
     if ($offer_price != null && $offer_price != "") {
@@ -202,8 +184,8 @@ class AccommodationService
       }
     }
 
+    $allOldImages = Room_picture::where('room_id', $id)->get();
     if (!empty($remainingPictureIds)) {
-      $allOldImages = Room_picture::where('room_id', $id)->get();
       if (!$allOldImages->isEmpty()) {
         foreach ($allOldImages as $oldImage) {
           if (!in_array($oldImage->id, $remainingPictureIds)) {
@@ -223,11 +205,11 @@ class AccommodationService
       ]);
     }
 
-    return response()->json([
+    return [
       'message' => 'Room updated successfully',
       'room' => $room->fresh(),
       'pictures' => Room_picture::where('room_id', $id)->get()
-    ]);
+    ];
   }
 
   public function delete_room($id)
@@ -238,15 +220,15 @@ class AccommodationService
     $room = Room::query()->where('id', $id)->first();
 
     if (!$room) {
-      return response()->json([
+      return [
         'message' => 'Room not found'
-      ], 404);
+      ];
     }
 
     if ($room->accommodation_id != $accommodation->id) {
-      return response()->json([
+      return [
         'message' => 'It is not your room'
-      ], 403);
+      ];
     }
 
     $pictures = Room_picture::query()->where('room_id', $room->id)->get();
@@ -261,9 +243,9 @@ class AccommodationService
 
     $room->delete();
 
-    return response()->json([
+    return [
       'message' => 'Room deleted successfully'
-    ]);
+    ];
   }
 
   public function show_records()
@@ -284,9 +266,7 @@ class AccommodationService
       });
       $data['rooms'] = $roomsWithData;
 
-      return response()->json(
-        $data
-      );
+      return $data;
     }
 
     $user_accommodations = User_accommodation::query()->where('accommodation_id', $accommodation->id)->latest()->get();
@@ -297,18 +277,16 @@ class AccommodationService
     });
     $data['details'] = $details;
 
-    return response()->json(
-      $data
-    );
+    return $data;
   }
 
   public function show_room_records($id)
   {
     $room = Room::query()->where('id', $id)->first();
     if (!$room) {
-      return response()->json([
+      return [
         'message' => 'Room not found'
-      ], 404);
+      ];
     }
     $customersIds = User_room::query()->where('room_id', $room->id)->latest()->get();
     foreach ($customersIds as $customersId) {
@@ -316,18 +294,16 @@ class AccommodationService
       $customersId['user'] = $user;
     }
 
-    return response()->json(
-      $customersIds
-    );
+    return $customersIds;
   }
 
   public function show_old_room_records($id)
   {
     $room = Room::query()->where('id', $id)->first();
     if (!$room) {
-      return response()->json([
+      return [
         'message' => 'Room not found'
-      ], 404);
+      ];
     }
     $customersIds = User_room::query()->where('room_id', $room->id)->orderBy('created_at', 'asc')->get();
     foreach ($customersIds as $customersId) {
@@ -335,9 +311,7 @@ class AccommodationService
       $customersId['user'] = $user;
     }
 
-    return response()->json(
-      $customersIds
-    );
+    return $customersIds;
   }
 
   public function show_old_records()
@@ -349,9 +323,9 @@ class AccommodationService
     $data = [];
 
     if (!$accommodation) {
-      return response()->json([
+      return [
         'message' => 'Something went wrong'
-      ]);
+      ];
     }
 
     if ($accommodation_type->name == "Hotel") {
@@ -374,9 +348,7 @@ class AccommodationService
       $sortedRooms = $roomsWithLatestBooking->sortBy('latest_booking')->values();
       $data['rooms'] = $sortedRooms;
 
-      return response()->json(
-        $data
-      );
+      return $data;
     }
 
     $user_accommodations = User_accommodation::query()->where('accommodation_id', $accommodation->id)->orderBy('created_at', 'asc')->get();
@@ -407,7 +379,7 @@ class AccommodationService
     // نُعيد الفهرسة الرقمية حتى تتناسب مع JSON
     $data['months'] = array_values($monthsData);
 
-    return response()->json($data);
+    return $data;
   }
 
   public function show_new_records()
@@ -419,9 +391,9 @@ class AccommodationService
     $data = [];
 
     if (!$accommodation) {
-      return response()->json([
+      return [
         'message' => 'Something went wrong'
-      ]);
+      ];
     }
 
     if ($accommodation_type->name == "Hotel") {
@@ -449,7 +421,7 @@ class AccommodationService
 
       $data['rooms'] = $sortedRooms;
 
-      return response()->json($data);
+      return $data;
     }
 
 
@@ -482,7 +454,7 @@ class AccommodationService
     // 3. إعادة الفهرسة للتحويل إلى JSON
     $data['months'] = array_values($monthsData);
 
-    return response()->json($data);
+    return $data;
   }
 
   public function show_popular_records()
@@ -494,9 +466,9 @@ class AccommodationService
     $data = [];
 
     if (!$accommodation) {
-      return response()->json([
+      return [
         'message' => 'Something went wrong'
-      ]);
+      ];
     }
 
     if ($accommodation_type->name == "Hotel") {
@@ -510,9 +482,7 @@ class AccommodationService
       $sortedRooms = $roomsWithPopularBooking->sortByDesc('count')->values();
       $data['rooms'] = $sortedRooms;
 
-      return response()->json(
-        $data
-      );
+      return $data;
     }
 
 
@@ -546,6 +516,6 @@ class AccommodationService
       ->values()                      // إعادة فهرسة الأرقام
       ->all();
 
-    return response()->json($data);
+    return $data;
   }
 }

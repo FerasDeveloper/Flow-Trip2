@@ -29,16 +29,15 @@ use Illuminate\Support\Facades\Route;
 
 
   Route::get('/Logout', [AuthController::class, 'logout']);
-  Route::get('/ShowProfile', [GeneralTaskController::class, 'show_profile']);
-
+  
   // Admin
-    // Request
+  // Request
   Route::get('/GetAllRequests', [AdminController::class, 'get_all_requests']);
   Route::get('/ShowRequest/{id}', [AdminController::class, 'show_request']);
   Route::post('/EditRequest/{id}', [AdminController::class, 'edit_request']);
   Route::get('/AcceptRequest/{id}', [AdminController::class, 'accept_request']);
   Route::get('/DeleteRequest/{id}', [AdminController::class, 'delete_request']);
-
+  
   Route::get('/getallpackage',[AdminController::class,'getAllPackages']);
   Route::get('/getPackage/{id}',[AdminController::class,'getPackage']);
   Route::get('/getAllActivity',[AdminController::class,'getAllActivity']);
@@ -47,19 +46,19 @@ use Illuminate\Support\Facades\Route;
   Route::get('/paybypoint/{id}',[AdminController::class,'paybypoint']);
   Route::post('/addcatigory',[AdminController::class,'addcatigory']);
   
-    // Owner
+  // Owner
   Route::get('/GetAllOwners', [AdminController::class, 'get_all_owners']);
   Route::get('/ShowOwner/{id}', [AdminController::class, 'show_owner']);
   Route::get('/BlockOwner/{id}', [AdminController::class, 'block']);
   Route::post('/AdminSearch', [AdminController::class, 'admin_search']);
-
-    // SubAdmin
+  
+  // SubAdmin
   Route::get('/getalluser',[AdminController::class,'getAllUsers']);
   Route::post('/filterusers',[AdminController::class,'filter_users']);
   Route::get('/createSubAdmin/{id}',[AdminController::class,'createSubAdmin']);
   Route::get('/getAllSubAdmin',[AdminController::class,'getAllSubAdmin']);
   Route::get('/removeSubAdmin/{id}',[AdminController::class,'removeSubAdmin']);
-
+  
   // AirLine
   //1. planes
   Route::post('/AddPlane', [AirLineController::class, 'add_plane']);
@@ -67,7 +66,7 @@ use Illuminate\Support\Facades\Route;
   Route::get('/GetAllPlanes', [AirLineController::class, 'get_all_planes']);
   Route::get('/GetSinglePlane/{plane_id}', [AirLineController::class, 'get_single_plane']);
   Route::get('/DeletePlane/{plane_id}', [AirLineController::class, 'delete_plane']);
-
+  
   //2. flights
   Route::post('/AddFlight', [AirLineController::class, 'add_flight']);
   Route::post('/EditFlight/{flight_id}', [AirLineController::class, 'edit_flight']);
@@ -87,6 +86,7 @@ use Illuminate\Support\Facades\Route;
   Route::get('/DeletePicture/{picture_id}', [GeneralTaskController::class, 'delete_picture']);
   Route::post('/AddService', [GeneralTaskController::class, 'add_service']);
   Route::get('/DeleteService/{service_id}', [GeneralTaskController::class, 'delete_service']);
+  Route::get('/ShowProfile', [GeneralTaskController::class, 'show_profile']);
   Route::post('/EditProfile', [GeneralTaskController::class, 'edit_profile']);
 
   // Accommodation

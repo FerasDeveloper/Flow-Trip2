@@ -26,43 +26,42 @@ class AdminController extends Controller
 
   public function get_all_requests()
   {
-    return $this->authRequestService->get_all_requests();
+    return response()->json($this->authRequestService->get_all_requests());
   }
 
   public function show_request($id)
   {
-    return $this->authRequestService->show_request($id);
+    return response()->json($this->authRequestService->show_request($id));
   }
 
   public function edit_request(AdminRequest $request, $id)
   {
-    $data = $request->validated();
-    return $this->authRequestService->edit_request($data, $id);
+    return response()->json($this->authRequestService->edit_request($request->validated(), $id));
   }
 
   public function accept_request($id)
   {
-    return $this->authRequestService->accept_request($id);
+    return response()->json($this->authRequestService->accept_request($id));
   }
 
   public function delete_request($id)
   {
-    return $this->authRequestService->delete_request($id);
+    return response()->json($this->authRequestService->delete_request($id));
   }
 
   public function get_all_owners()
   {
-    return $this->adminService->get_all_owners();
+    return response()->json($this->adminService->get_all_owners());
   }
 
   public function show_owner($id)
   {
-    return $this->adminService->show_owner($id);
+    return response()->json($this->adminService->show_owner($id));
   }
 
   public function block($id)
   {
-    return $this->adminService->toggleBlockStatus($id);
+    return response()->json($this->adminService->toggleBlockStatus($id));
   }
 
   public function admin_search(AdminRequest $request)
@@ -72,7 +71,7 @@ class AdminController extends Controller
       'name'        => null,
       'category_id' => null,
     ], $request->validated());
-    return $this->adminService->admin_search($data);
+    return response()->json($this->adminService->admin_search($data));
   }
 
   public function getAllPackages()

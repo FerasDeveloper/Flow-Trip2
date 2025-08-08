@@ -28,7 +28,7 @@ class AuthRequestService
       );
     }
   }
-  
+
   public function get_all_requests()
   {
     $this->ensureAdmin();
@@ -36,9 +36,7 @@ class AuthRequestService
     $data = [];
 
     if ($requests->isEmpty()) {
-      return response()->json([
-        'message' => 'Something went wrong'
-      ]);
+      return ['message' => 'There is no Auth request yet'];
     }
 
     foreach ($requests as $request) {
@@ -49,9 +47,7 @@ class AuthRequestService
       ];
     }
 
-    return response()->json([
-      'data' => $data
-    ]);
+    return ['data' => $data];
   }
 
   public function show_request($id)
@@ -60,9 +56,7 @@ class AuthRequestService
     $data = [];
     $request = Auth_request::query()->where('id', $id)->first();
     if ($request == null) {
-      return response()->json([
-        'message' => 'Something went wrong'
-      ]);
+      return ['message' => 'Something went wrong'];
     }
     $user = User::query()->where('id', $request->user_id)->first();
     $data[] = [
@@ -71,27 +65,21 @@ class AuthRequestService
       'email' => $user->email,
       'phone_number' => $user->phone_number,
     ];
-    return response()->json([
-      'data' => $data[0]
-    ]);
+    return ['data' => $data[0]];
   }
 
   public function edit_request($request, $id)
   {
     $this->ensureAdmin();
     if ($id == null) {
-      return response()->json([
-        'message' => 'Something went wrong'
-      ]);
+      return ['message' => 'Something went wrong'];
     }
     $update = Auth_request::query()->where('id', $id)->update([
       'activity_name' => $request['activity_name']
     ]);
 
     if ($update) {
-      return response()->json([
-        'message' => 'Request updated successfully'
-      ]);
+      return ['message' => 'Request updated successfully'];
     }
   }
 
@@ -99,15 +87,11 @@ class AuthRequestService
   {
     $this->ensureAdmin();
     if ($id == null) {
-      return response()->json([
-        'message' => 'Something went wrong'
-      ]);
+      return ['message' => 'Something went wrong'];
     }
     $request = Auth_request::query()->where('id', $id)->first();
     if ($request == null) {
-      return response()->json([
-        'message' => 'Something went wrong'
-      ]);
+      return ['message' => 'Something went wrong'];
     }
     $owner = Owner::query()->create([
       'location' => $request->location,
@@ -119,9 +103,7 @@ class AuthRequestService
 
     $id = $request->owner_category_id;
     if ($id == null) {
-      return response()->json([
-        'message' => 'Something went wrong'
-      ]);
+      return ['message' => 'Something went wrong'];
     }
     switch ($id) {
       case '1':
@@ -181,36 +163,28 @@ class AuthRequestService
     ]);
 
     $request->delete();
-    return response()->json([
+    return [
       'message' => 'Request accepted successfully',
       'data' => $owner
-    ]);
+    ];
   }
 
   public function delete_request($id)
   {
     $this->ensureAdmin();
     if ($id == null) {
-      return response()->json([
-        'message' => 'Something went wrong'
-      ]);
+      return ['message' => 'Something went wrong'];
     }
     $request = Auth_request::query()->where('id', $id)->first();
     if ($request == null) {
-      return response()->json([
-        'message' => 'Something went wrong'
-      ]);
+      return ['message' => 'Something went wrong'];
     }
     $user = User::query()->where('id', $request->user_id)->first();
     $delete = $request->delete();
     $deleteUser = $user->delete();
     if ($delete && $deleteUser) {
-      return response()->json([
-        'message' => 'Request deleted successfully'
-      ]);
+      return ['message' => 'Request deleted successfully'];
     }
-    return response()->json([
-      'message' => 'Something went wrong'
-    ]);
+    return ['message' => 'Something went wrong'];
   }
 }

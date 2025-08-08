@@ -41,26 +41,6 @@ class AdminService
     }
   }
 
-
-  public function toggleBlockStatus($id)
-  {
-    $this->ensureAdmin();
-    $user = User::find($id);
-
-    if (!$user) {
-      return response()->json(['message' => 'User not found'], 404);
-    }
-
-    if ($user->status == 2) {
-      $user->update(['status' => 0]);
-      return response()->json(['message' => 'User unblocked successfully']);
-    } else {
-      $user->update(['status' => 2]);
-      $user->tokens()->delete();
-      return response()->json(['message' => 'User blocked successfully']);
-    }
-  }
-
   public function get_all_owners()
   {
     $this->ensureAdmin();
@@ -68,9 +48,7 @@ class AdminService
     $data = [];
 
     if ($owners->isEmpty()) {
-      return response()->json([
-        'message' => 'Something went wrong'
-      ]);
+      return ['message' => 'Something went wrong'];
     }
 
     foreach ($owners as $owner) {
@@ -85,10 +63,7 @@ class AdminService
         'user' => $user
       ];
     }
-
-    return response()->json([
-      'data' => $data
-    ]);
+    return ['data' => $data];
   }
 
   public function show_owner($id)
@@ -96,9 +71,7 @@ class AdminService
     $this->ensureAdmin();
     $owner = Owner::query()->where('id', $id)->first();
     if ($owner == null) {
-      return response()->json([
-        'message' => 'Something went wrong'
-      ]);
+      return ['message' => 'Something went wrong'];
     }
     $data = [];
     $data['owner'] = $owner;
@@ -107,9 +80,7 @@ class AdminService
     $category = Owner_category::query()->where('id', $owner->owner_category_id)->select('name')->first();
 
     if ($category == null || $country == null) {
-      return response()->json([
-        'message' => 'Something went wrong'
-      ]);
+      return ['message' => 'Something went wrong'];
     }
 
     $owner['country'] = $country->name;
@@ -180,7 +151,26 @@ class AdminService
         'activity' => $activity->name
       ];
     }
-    return response()->json($data);
+    return $data;
+  }
+
+    public function toggleBlockStatus($id)
+  {
+    $this->ensureAdmin();
+    $user = User::find($id);
+
+    if (!$user) {
+      return ['message' => 'User not found'];
+    }
+
+    if ($user->status == 2) {
+      $user->update(['status' => 0]);
+      return ['message' => 'User unblocked successfully'];
+    } else {
+      $user->update(['status' => 2]);
+      $user->tokens()->delete();
+      return ['message' => 'User blocked successfully'];
+    }
   }
 
   public function admin_search($request)
@@ -192,7 +182,7 @@ class AdminService
     $data = [];
 
     if (empty($countrySearch) && empty($nameSearch) && empty($categorySearch)) {
-      return response()->json(['message' => 'No Result']);
+      return ['message' => 'No Result'];
     }
 
     $query = Owner::query();
@@ -262,11 +252,9 @@ class AdminService
     }
 
     if ($owners->isNotEmpty()) {
-      return response()->json([
-        'data' => $data
-      ]);
+      return ['data' => $data];
     } else {
-      return response()->json(['message' => 'No Result']);
+      return ['message' => 'No Result'];
     }
   }
 }

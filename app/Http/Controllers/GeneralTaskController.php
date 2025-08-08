@@ -110,63 +110,27 @@ class GeneralTaskController extends Controller
 
 
 
-  public function edit_profile(Request $request){
-    $user = User::find(Auth::id());
-    $owner = Owner::query()->where('user_id', $user->id)->first();
-
-    $user->update([
-      'name' => $request->name,
-      'email' => $request->email,
-      'phone_number' => $request->phone_number,
-    ]);
-    $owner->update([
-      'description' => $request->description,
-      'location' => $request->location,
-      'country_id' => $request->country_id,
-    ]);
-
+  public function edit_profile(GeneralTaskFormRequest $request){
+  $data = $request->validated();
     $remainingPictureIds = [];
     $deletedPictureIds = [];
-
+    $images = [];
+    
     if ($request->has('remaining_picture_ids')) {
-        $remainingPictureIds = json_decode($request->remaining_picture_ids, true);
+      $remainingPictureIds = $request->input('remaining_picture_ids');
     }
-
     if ($request->has('deleted_picture_ids')) {
-        $deletedPictureIds = json_decode($request->deleted_picture_ids, true);
+      $deletedPictureIds = $request->input('deleted_picture_ids');
     }
-
-    if (!empty($deletedPictureIds)) {
-        $deletedImages = Picture::whereIn('id', $deletedPictureIds)->get();
-        foreach ($deletedImages as $deletedImage) {
-            $fileName = basename($deletedImage->room_picture);
-            Storage::disk('public')->delete("images/{$fileName}");
-            $deletedImage->delete();
-        }
-    }
-
-    $allOldImages = Picture::where('owner_id', $owner->id)->get();
-    foreach ($allOldImages as $oldImage) {
-        if (!in_array($oldImage->id, $remainingPictureIds)) {
-            $fileName = basename($oldImage->room_picture);
-            Storage::disk('public')->delete("images/{$fileName}");
-            $oldImage->delete();
-        }
-    }
-
     if ($request->hasFile('images')) {
-        foreach ($request->file('images') as $image) {
-            $imagePath = $image->store('images', 'public');
-            Picture::query()->create([
-                'owner_id' => $owner->id,
-                'reference' => 'storage/' . $imagePath
-            ]);
-        }
+      $images = $request->file('images');
     }
-
-    return response()->json([
-        'message' => 'Profile updated successfully'
-    ]);
+    return response()->json(
+      $this->service->edit_profile(
+      $data,
+      $remainingPictureIds,
+      $deletedPictureIds,
+      $images,
+    ));
   }
-  
 }

@@ -18,18 +18,17 @@ class AccommodationController extends Controller
 
   public function filter_name_accommodation(AccommodationRequest $request)
   {
-    $data = $request->validated();
-    return $this->service->filter_name_accommodation($data);
+    return $this->service->filter_name_accommodation($request->validated());
   }
 
   public function show_offers()
   {
-    return $this->service->show_offers();
+    return response()->json($this->service->show_offers());
   }
 
   public function show_all_rooms()
   {
-    return $this->service->show_all_rooms();
+    return response()->json($this->service->show_all_rooms());
   }
 
 
@@ -37,12 +36,12 @@ class AccommodationController extends Controller
   {
     $data = $request->validated();
     $images = $request->file('images', []);
-    return $this->service->add_room($data, $images);
+    return response()->json($this->service->add_room($data, $images));
   }
 
   public function show_room($id)
   {
-    return $this->service->show_room($id);
+    return response()->json($this->service->show_room($id));
   }
 
   public function edit_room(AccommodationRequest $request, $id)
@@ -62,48 +61,49 @@ class AccommodationController extends Controller
     if ($request->hasFile('images')) {
       $images = $request->file('images');
     }
-    return $this->service->edit_room(
+    return response()->json(
+      $this->service->edit_room(
       $data,
       $remainingPictureIds,
       $deletedPictureIds,
       $images,
       $offerPrice,
       $id
-    );
+    ));
   }
 
   public function delete_room($id)
   {
-    return $this->service->delete_room($id);
+    return response()->json($this->service->delete_room($id));
   }
 
   public function show_records()
   {
-    return $this->service->show_records();
+    return response()->json($this->service->show_records());
   }
 
   public function show_room_records($id)
   {
-    return $this->service->show_room_records($id);
+    return response()->json($this->service->show_room_records($id));
   }
 
   public function show_old_room_records($id)
   {
-    return $this->service->show_old_room_records($id);
+    return response()->json($this->service->show_old_room_records($id));
   }
 
   public function show_old_records()
   {
-    return $this->service->show_old_records();
+    return response()->json($this->service->show_old_records());
   }
 
   public function show_new_records()
   {
-    return $this->service->show_new_records();
+    return response()->json($this->service->show_new_records());
   }
 
   public function show_popular_records()
   {
-    return $this->service->show_popular_records();
+    return response()->json($this->service->show_popular_records());
   }
 }
