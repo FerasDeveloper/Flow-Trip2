@@ -21,8 +21,17 @@ class GeneralTaskFormRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
-            //
-        ];
+        $action = $this->route()->getActionMethod();
+
+        return match($action) {
+            'add_picture' => [
+                'picture' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+            ],
+            'add_service' => [
+                'services' => 'required|array',
+                'services.*' => 'string',
+            ],
+            default => [],
+        };
     }
 }
