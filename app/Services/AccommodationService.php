@@ -10,8 +10,11 @@ use App\Models\Room_picture;
 use App\Models\User;
 use App\Models\User_accommodation;
 use App\Models\User_room;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+
+use function PHPUnit\Framework\isEmpty;
 
 class AccommodationService
 {
@@ -201,11 +204,13 @@ class AccommodationService
 
     if (!empty($remainingPictureIds)) {
       $allOldImages = Room_picture::where('room_id', $id)->get();
-      foreach ($allOldImages as $oldImage) {
-        if (!in_array($oldImage->id, $remainingPictureIds)) {
-          $fileName = basename($oldImage->room_picture);
-          Storage::disk('public')->delete("images/{$fileName}");
-          $oldImage->delete();
+      if (!$allOldImages->isEmpty()) {
+        foreach ($allOldImages as $oldImage) {
+          if (!in_array($oldImage->id, $remainingPictureIds)) {
+            $fileName = basename($oldImage->room_picture);
+            Storage::disk('public')->delete("images/{$fileName}");
+            $oldImage->delete();
+          }
         }
       }
     }
@@ -217,7 +222,6 @@ class AccommodationService
         'room_picture' => 'storage/' . $imagePath
       ]);
     }
-
 
     return response()->json([
       'message' => 'Room updated successfully',
@@ -356,10 +360,14 @@ class AccommodationService
       $roomsWithLatestBooking = $rooms->map(function ($room) {
         $latestBooking = User_room::query()
           ->where('room_id', $room->id)
-          ->orderBy('created_at', 'asc')
+          ->orderBy('start_date', 'asc')
           ->first();
-        $room['latest_booking'] = $latestBooking ? $latestBooking->created_at : null;
-        $room['count'] = User_room::query()->where('room_id', $room->id)->count();
+
+        $room['latest_booking'] = $latestBooking ? $latestBooking->start_date : null;
+        $room['count'] = User_room::query()
+          ->where('room_id', $room->id)
+          ->count();
+
         return $room;
       });
 
@@ -373,15 +381,108 @@ class AccommodationService
 
     $user_accommodations = User_accommodation::query()->where('accommodation_id', $accommodation->id)->orderBy('created_at', 'asc')->get();
 
-    $details = $user_accommodations->map(function ($user_accommodation) {
-      $user_accommodation['user'] = User::query()->where('id', $user_accommodation->user_id)->first();
-      return $user_accommodation;
-    });
-    $data['details'] = $details;
+    $monthsData = [];
 
-    return response()->json(
-      $data
-    );
+    foreach ($user_accommodations as $item) {
+      // مفتاح الفرز: "سنة-شهر"
+      $monthKey  = Carbon::parse($item->start_date)->format('Y-m');
+      // الاسم الظاهر: مثل "January 2025"
+      $monthName = Carbon::parse($item->start_date)->format('F Y');
+
+      if (!isset($monthsData[$monthKey])) {
+        $monthsData[$monthKey] = [
+          'month' => $monthName,
+          'count' => 0,
+          'items' => []
+        ];
+      }
+
+      $monthsData[$monthKey]['items'][] = $item;
+      $monthsData[$monthKey]['count']++;
+    }
+
+    // نرتب مفاتيح المصفوفة تصاعدياً
+    ksort($monthsData);
+
+    // نُعيد الفهرسة الرقمية حتى تتناسب مع JSON
+    $data['months'] = array_values($monthsData);
+
+    return response()->json($data);
+  }
+
+  public function show_new_records()
+  {
+    $user = Auth::user();
+    $owner = Owner::query()->where('user_id', $user->id)->first();
+    $accommodation = Accommodation::query()->where('owner_id', $owner->id)->first();
+    $accommodation_type = Accommodation_type::query()->where('id', $accommodation->accommodation_type_id)->select('name')->first();
+    $data = [];
+
+    if (!$accommodation) {
+      return response()->json([
+        'message' => 'Something went wrong'
+      ]);
+    }
+
+    if ($accommodation_type->name == "Hotel") {
+      $rooms = Room::query()
+        ->where('accommodation_id', $accommodation->id)
+        ->get();
+
+      $roomsWithNewestBooking = $rooms->map(function ($room) {
+        $newestBooking = User_room::query()
+          ->where('room_id', $room->id)
+          ->orderBy('start_date', 'desc')
+          ->first();
+
+        $room['newest_booking'] = $newestBooking ? $newestBooking->start_date : null;
+        $room['count'] = User_room::query()
+          ->where('room_id', $room->id)
+          ->count();
+
+        return $room;
+      });
+
+      $sortedRooms = $roomsWithNewestBooking
+        ->sortByDesc('newest_booking')
+        ->values();
+
+      $data['rooms'] = $sortedRooms;
+
+      return response()->json($data);
+    }
+
+
+    $user_accommodations = User_accommodation::query()
+      ->where('accommodation_id', $accommodation->id)
+      ->orderBy('created_at', 'desc')
+      ->get();
+
+    $monthsData = [];
+
+    foreach ($user_accommodations as $item) {
+      $monthKey  = Carbon::parse($item->start_date)->format('Y-m');
+      $monthName = Carbon::parse($item->start_date)->format('F Y');
+
+      if (! isset($monthsData[$monthKey])) {
+        $monthsData[$monthKey] = [
+          'month' => $monthName,
+          'count' => 0,
+          'items' => []
+        ];
+      }
+
+      $monthsData[$monthKey]['items'][] = $item;
+      $monthsData[$monthKey]['count']++;
+    }
+
+    // 2. فرز الأشهر تنازلياً
+    krsort($monthsData);
+
+    // 3. إعادة الفهرسة للتحويل إلى JSON
+    $data['months'] = array_values($monthsData);
+
+    return response()->json($data);
   }
 
   public function show_popular_records()
@@ -414,21 +515,36 @@ class AccommodationService
       );
     }
 
-    $user_accommodations = User_accommodation::query()->where('accommodation_id', $accommodation->id)->orderBy('created_at', 'asc')->get();
+
+    $user_accommodations = User_accommodation::query()
+      ->where('accommodation_id', $accommodation->id)
+      ->orderBy('created_at', 'asc')
+      ->get();
+
+
     $monthsData = [];
-    foreach ($user_accommodations as $user_accommodation) {
-      $monthName = \Carbon\Carbon::parse($user_accommodation->created_at)->format('F');
-      $user_accommodation['user'] = User::query()->where('id', $user_accommodation->user_id)->first();
-      if (!isset($monthsData[$monthName])) {
-        $monthsData[$monthName] = [
+
+    foreach ($user_accommodations as $item) {
+      $key       = Carbon::parse($item->start_date)->format('Y-m');
+      $monthName = Carbon::parse($item->start_date)->format('F Y');
+
+      if (! isset($monthsData[$key])) {
+        $monthsData[$key] = [
+          'month' => $monthName,
           'count' => 0,
           'items' => []
         ];
       }
-      $monthsData[$monthName]['items'][] = $user_accommodation;
-      $monthsData[$monthName]['count'] += 1;
+
+      $monthsData[$key]['items'][] = $item;
+      $monthsData[$key]['count']++;
     }
-    $data['months'] = $monthsData;
+
+    $data['months'] = collect($monthsData)
+      ->values()                      // نتخلص من المفاتيح الزمنية
+      ->sortByDesc('count')           // الفرز تنازليًا حسب عدد الحجوزات
+      ->values()                      // إعادة فهرسة الأرقام
+      ->all();
 
     return response()->json($data);
   }
