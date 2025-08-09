@@ -76,10 +76,7 @@ class AuthController extends Controller
             return response()->json(['message' => 'Your email does not match with password.. Please try again.']);
         }
 
-        return response()->json([
-            'message' => 'Welcome',
-            'token' => $result['token']
-        ]);
+        return response()->json($result, 200);
     }
 
     public function logout(): JsonResponse

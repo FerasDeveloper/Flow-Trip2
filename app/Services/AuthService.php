@@ -2,8 +2,12 @@
 
 namespace App\Services;
 
+use App\Models\Accommodation;
+use App\Models\Accommodation_type;
 use App\Models\Auth_request;
 use App\Models\Owner;
+use App\Models\Owner_category;
+use App\Models\Role;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
@@ -156,7 +160,18 @@ class AuthService
         }
 
         $user['token'] = $user->createToken('AccessToken')->plainTextToken;
-        return ['token' => $user['token']];    
+        
+        $roleInfo = $this->getRole($user);
+        $responseData = [
+            'message' => 'Welcome',
+            'token' => $user['token'],
+            'name' => $user['name'],
+            'id' => $user['id'],
+            'role' => $roleInfo['role']
+        ];
+
+        return $responseData;
+
     }
     return false;
   }
@@ -164,6 +179,39 @@ class AuthService
   public function logout()
   {
     Auth::user()->currentAccessToken()->delete();
+  }
 
+
+  public function getRole(User $user)
+  {
+      $role = Role::where('id', $user->role_id)->first();
+  
+      $result = [
+          'role' => $role->role_name ?? 'Unknown'
+      ];
+    
+      if ($role && $role->role_name === 'owner') {
+          $owner = Owner::where('user_id', $user->id)->first();
+          if (!$owner) 
+            return $result;
+      
+          $category = Owner_category::where('id', $owner->owner_category_id)->first();
+          $categoryName = $category->name ?? 'Unknown category';
+      
+          if ($categoryName === 'Accommodation') {
+              $accommodation = Accommodation::where('owner_id', $owner->id)->first();
+          
+              if ($accommodation) {
+                  $type = Accommodation_type::find($accommodation->accommodation_type_id);
+                  $result['role'] = $type->name ?? 'Accommodation type not found.';
+              } else {
+                  $result['role'] = 'Accommodation record not found.';
+              }
+          } else {
+              $result['role'] = $categoryName;
+          }
+      }
+    
+      return $result;
   }
 }
