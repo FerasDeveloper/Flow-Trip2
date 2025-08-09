@@ -57,6 +57,7 @@ use Illuminate\Support\Facades\Route;
   Route::post('/filterusers',[AdminController::class,'filter_users']);
   Route::get('/createSubAdmin/{id}',[AdminController::class,'createSubAdmin']);
   Route::get('/getAllSubAdmin',[AdminController::class,'getAllSubAdmin']);
+  Route::post('/filterSubAdmins',[AdminController::class,'filter_sub_admins']);
   Route::get('/removeSubAdmin/{id}',[AdminController::class,'removeSubAdmin']);
   
   // AirLine

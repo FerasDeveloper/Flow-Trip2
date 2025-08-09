@@ -152,6 +152,14 @@ class AdminController extends Controller
     ]);
   }
 
+  public function filter_sub_admins(Request $request)
+  {
+    $users = User::query()->where('name', 'like', '%' . $request->name . '%')->where('role_id', 2)->get();
+    return response()->json([
+      'data' => $users
+    ]);
+  }
+
   public function createSubAdmin($id)
   {
     $user = User::find($id);
