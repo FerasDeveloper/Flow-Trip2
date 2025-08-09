@@ -158,6 +158,9 @@ class AuthService
         else if ($user['status'] == 1) {
           return 'pending';
         }
+        // else if ($user['email_verified_at'] == null) {
+        //   return 'unverified';
+        // }
 
         $user['token'] = $user->createToken('AccessToken')->plainTextToken;
         

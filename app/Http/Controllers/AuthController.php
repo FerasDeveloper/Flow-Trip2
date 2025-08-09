@@ -72,6 +72,9 @@ class AuthController extends Controller
         if ($result === 'pending') {
             return response()->json(['message' => 'Your request is still being processed.']);
         }
+        if ($result === 'unverified') {
+            return response()->json(['message' => 'You need no verify your email address.']);
+        }
         if (!$result) {
             return response()->json(['message' => 'Your email does not match with password.. Please try again.']);
         }
