@@ -14,4 +14,10 @@ class User_package extends Model
     'traveler_name',
     'national_number'
   ];
+
+  public function user()
+  {
+    return $this->belongsTo(User::class);
+  }
+  
 }
