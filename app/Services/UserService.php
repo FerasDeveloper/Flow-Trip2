@@ -1,0 +1,112 @@
+<?php
+
+namespace App\Services;
+
+use App\Models\Activity;
+use App\Models\Activity_owner;
+use App\Models\Owner;
+use App\Models\Package;
+use App\Models\Package_element;
+use App\Models\Package_element_picture;
+use App\Models\Tourism_company;
+use App\Models\User_package;
+use Exception;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+
+class UserService
+{
+
+  public function getRandomPackages()
+  {
+    $packagesQuery = Package::query();
+
+    if ($packagesQuery->count() <= 5) {
+      $packages = $packagesQuery->get();
+    } else {
+      $packages = $packagesQuery->inRandomOrder()->limit(5)->get();
+    }
+
+    return $packages->map(function ($package) {
+      return [
+        'id' => $package->id,
+        'description' => $package->discription,
+        'total_price' => $package->total_price,
+        'checked' => $package->checked,
+        'payment_by_points' => $package->payment_by_points,
+        'picture' => $package->package_picture
+          ? asset('storage/' . $package->package_picture)
+          : null,
+      ];
+    });
+  }
+
+  public function getActivity()
+  {
+    return DB::table('activity_owners')
+      ->join('activities', 'activity_owners.activity_id', '=', 'activities.id')
+      ->join('owners', 'activity_owners.owner_id', '=', 'owners.id')
+      ->join('users', 'owners.user_id', '=', 'users.id')
+      ->join('countries', 'owners.country_id', '=', 'countries.id')
+      ->select(
+        'activities.id as id',
+        'activities.name as activity_name',
+        'activity_owners.owner_name',
+        'owners.description',
+        'owners.location',
+        'users.phone_number',
+        'countries.name as country_name'
+      )
+      ->get();
+  }
+
+  public function getRandomActivity()
+  {
+    $activityOwnersQuery = Activity_owner::query();
+    if ($activityOwnersQuery->count() <= 5) {
+      $records = $activityOwnersQuery->get();
+    } else {
+      $records = $activityOwnersQuery->inRandomOrder()->limit(5)->get();
+    }
+    return $records->map(function ($record) {
+      $activity = Activity::find($record->activity_id);
+      $ownerData = Owner::join('users', 'owners.user_id', '=', 'users.id')
+        ->join('countries', 'owners.country_id', '=', 'countries.id')
+        ->where('owners.id', $record->owner_id)
+        ->select(
+          'owners.description',
+          'owners.location',
+          'users.phone_number',
+          'countries.name as country_name'
+        )
+        ->first();
+      return [
+        'id'            => $activity->id ?? null,
+        'activity_name' => $activity->name ?? null,
+        'owner_name'    => $record->owner_name,
+        'description'   => $ownerData->description ?? null,
+        'location'      => $ownerData->location ?? null,
+        'phone_number'  => $ownerData->phone_number ?? null,
+        'country_name'  => $ownerData->country_name ?? null,
+      ];
+    });
+  }
+
+  public function getRandomAccommodations()
+  {
+    return DB::table('accommodations')
+      ->join('accommodation_types', 'accommodations.accommodation_type_id', '=', 'accommodation_types.id')
+      ->join('owners', 'accommodations.owner_id', '=', 'owners.id')
+      ->select(
+        'accommodations.*',
+        'accommodation_types.name as type_name',
+        'owners.description as owner_description',
+        'owners.location as owner_location'
+      )
+      ->inRandomOrder()
+      ->limit(5)
+      ->get();
+  }
+}
