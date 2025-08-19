@@ -4,12 +4,14 @@ namespace App\Services;
 
 use App\Models\Activity;
 use App\Models\Activity_owner;
+use App\Models\Flight;
 use App\Models\Owner;
 use App\Models\Package;
 use App\Models\Package_element;
 use App\Models\Package_element_picture;
 use App\Models\Tourism_company;
 use App\Models\User_package;
+use App\Models\Vehicle;
 use Exception;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -108,5 +110,198 @@ class UserService
       ->inRandomOrder()
       ->limit(5)
       ->get();
+  }
+  // public function filterFlights($request)
+  // {
+  //   $start          = $request->starting_point_location;
+  //   $end            = $request->landing_point_location;
+  //   $isRoundTrip    = $request->is_round_trip;
+  //   $passengerCount = (int) $request->passenger_count;
+
+  //   if (!$isRoundTrip) {
+  //     $date = $request->date;
+
+  //     $flights = Flight::with(['Air_line', 'Plane', 'Seat'])
+  //       ->where('starting_point_location', $start)
+  //       ->where('landing_point_location', $end)
+  //       ->whereDate('date', $date)
+  //       ->get();
+
+  //     $flights = $flights->filter(function ($flight) use ($passengerCount) {
+  //       if (!$flight->Plane) return false;
+
+  //       $available = $flight->Plane->seats_count - DB::table('user_flights')->where('flight_id', $flight->id)->count();
+  //       return $available >= $passengerCount;
+  //     })->values();
+
+  //     if ($flights->isEmpty()) {
+  //       return response()->json(['message' => 'No available flights found.'], 404);
+  //     }
+
+  //     return $flights;
+  //   }
+
+  //   // اتجاهين
+  //   $departureDate = $request->departure_date;
+  //   $returnDate    = $request->return_date;
+
+  //   $goFlights = Flight::with(['Air_line', 'Plane', 'Seat'])
+  //     ->where('starting_point_location', $start)
+  //     ->where('landing_point_location', $end)
+  //     ->whereDate('date', $departureDate)
+  //     ->get();
+
+  //   $returnFlights = Flight::with(['Air_line', 'Plane', 'Seat'])
+  //     ->where('starting_point_location', $end)
+  //     ->where('landing_point_location', $start)
+  //     ->whereDate('date', $returnDate)
+  //     ->get();
+
+  //   $goFlights = $goFlights->filter(function ($flight) use ($passengerCount) {
+  //     if (!$flight->Plane) return false;
+  //     $available = $flight->Plane->seats_count - DB::table('user_flights')->where('flight_id', $flight->id)->count();
+  //     return $available >= $passengerCount;
+  //   })->values();
+
+  //   $returnFlights = $returnFlights->filter(function ($flight) use ($passengerCount) {
+  //     if (!$flight->Plane) return false;
+  //     $available = $flight->Plane->seats_count - DB::table('user_flights')->where('flight_id', $flight->id)->count();
+  //     return $available >= $passengerCount;
+  //   })->values();
+
+  //   if ($goFlights->isEmpty() || $returnFlights->isEmpty()) {
+  //     return response()->json(['message' => 'No available round trips found.'], 404);
+  //   }
+
+  //   $roundTrips = [];
+  //   foreach ($goFlights as $go) {
+  //     foreach ($returnFlights as $ret) {
+  //       $roundTrips[] = ['go' => $go, 'return' => $ret];
+  //     }
+  //   }
+
+  //   return $roundTrips;
+  // }
+
+  public function filterFlights($request)
+  {
+    $start          = $request->starting_point_location;
+    $end            = $request->landing_point_location;
+    $isRoundTrip    = $request->is_round_trip;
+    $passengerCount = (int) $request->passenger_count;
+
+    if (!$isRoundTrip) {
+      $date = $request->date;
+
+      $flights = Flight::with(['Air_line', 'Plane', 'Seat'])
+        ->where('starting_point_location', $start)
+        ->where('landing_point_location', $end)
+        ->whereDate('date', $date)
+        ->get();
+
+      $flights = $flights->filter(function ($flight) use ($passengerCount) {
+        if (!$flight->Plane) return false;
+
+        $available = $flight->Plane->seats_count - DB::table('user_flights')->where('flight_id', $flight->id)->count();
+        return $available >= $passengerCount;
+      })->values();
+
+      return $flights->toArray();
+    }
+
+    $departureDate = $request->departure_date;
+    $returnDate    = $request->return_date;
+
+    $goFlights = Flight::with(['Air_line', 'Plane', 'Seat'])
+      ->where('starting_point_location', $start)
+      ->where('landing_point_location', $end)
+      ->whereDate('date', $departureDate)
+      ->get();
+
+    $returnFlights = Flight::with(['Air_line', 'Plane', 'Seat'])
+      ->where('starting_point_location', $end)
+      ->where('landing_point_location', $start)
+      ->whereDate('date', $returnDate)
+      ->get();
+
+    $goFlights = $goFlights->filter(function ($flight) use ($passengerCount) {
+      if (!$flight->Plane) return false;
+      $available = $flight->Plane->seats_count - DB::table('user_flights')->where('flight_id', $flight->id)->count();
+      return $available >= $passengerCount;
+    })->values();
+
+    $returnFlights = $returnFlights->filter(function ($flight) use ($passengerCount) {
+      if (!$flight->Plane) return false;
+      $available = $flight->Plane->seats_count - DB::table('user_flights')->where('flight_id', $flight->id)->count();
+      return $available >= $passengerCount;
+    })->values();
+
+    if ($goFlights->isEmpty() || $returnFlights->isEmpty()) {
+      return [];
+    }
+
+    $roundTrips = [];
+    foreach ($goFlights as $go) {
+      foreach ($returnFlights as $ret) {
+        $roundTrips[] = ['go' => $go, 'return' => $ret];
+      }
+    }
+
+    return $roundTrips;
+  }
+  public function searchVehicles(array $filters)
+  {
+    $query = Vehicle::with([
+      'car_type:id,name',
+      'vehicle_owner.owner.user:id,email,phone_number',
+      'vehicle_owner.owner.country:id,name'
+    ])->select(
+      'id',
+      'vehicle_owner_id',
+      'car_type_id',
+      'car_discription',
+      'people_count',
+      'name'
+    );
+
+    if (!empty($filters['location'])) {
+      $query->whereHas('vehicle_owner.owner', function ($q) use ($filters) {
+        $q->where('location', 'like', '%' . $filters['location'] . '%');
+      });
+    }
+
+    if (!empty($filters['vehicle_name'])) {
+      $query->where('name', 'like', '%' . $filters['vehicle_name'] . '%');
+    }
+
+    if (!empty($filters['car_type'])) {
+      $query->where('car_type_id', $filters['car_type']);
+    }
+
+    if (!empty($filters['people_count'])) {
+      $query->where('people_count', $filters['people_count']);
+    }
+
+    return $query->get()->map(function ($vehicle) {
+      return [
+        'id'              => $vehicle->id,
+        'car_discription' => $vehicle->car_discription,
+        'people_count'    => $vehicle->people_count,
+        'name'            => $vehicle->name,
+        'car_type_name'   => $vehicle->car_type?->name,
+        'vehicle_owner'   => [
+          'id'         => $vehicle->vehicle_owner->id ?? null,
+          'owner_name' => $vehicle->vehicle_owner->owner_name ?? null,
+          'location'   => $vehicle->vehicle_owner->owner->location ?? null,
+          'user'       => [
+            'email'        => $vehicle->vehicle_owner->owner->user->email ?? null,
+            'phone_number' => $vehicle->vehicle_owner->owner->user->phone_number ?? null,
+          ],
+          'country'    => [
+            'name' => $vehicle->vehicle_owner->owner->country->name ?? null,
+          ],
+        ],
+      ];
+    });
   }
 }

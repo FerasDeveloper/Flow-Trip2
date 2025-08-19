@@ -25,10 +25,10 @@ class Flight extends Model
     ];
 
     public function Air_line(){
-      return $this->belongsToMany(Air_line::class);
+      return $this->belongsTo(Air_line::class);
     }
     public function Plane(){
-      return $this->belongsToMany(Plane::class);
+      return $this->belongsTo(Plane::class);
     }
     public function User()
     {
