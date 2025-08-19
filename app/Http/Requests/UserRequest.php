@@ -18,6 +18,7 @@ class UserRequest extends FormRequest
     return match ($action) {
       'searchVehicles' => $this->searchVehiclesRules(),
       'filterFlights'  => $this->filterFlightsRules(),
+      'filterActivities' => $this->filterActivitiesRules(),
       default => [],
     };
   }
@@ -44,6 +45,15 @@ class UserRequest extends FormRequest
       'return_date'             => ['required_if:is_round_trip,true', 'date'],
     ];
   }
+  private function filterActivitiesRules(): array
+  {
+    return [
+      'activity_name' => ['nullable', 'string'],
+      'country_name'  => ['nullable', 'string'],
+      'location'      => ['nullable', 'string'],
+    ];
+  }
+
 
   public function messages(): array
   {
@@ -74,6 +84,13 @@ class UserRequest extends FormRequest
           'date.required_if'                 => 'Date is required for one-way trips.',
           'departure_date.required_if'       => 'Departure date is required for round trips.',
           'return_date.required_if'          => 'Return date is required for round trips.',
+        ];
+      case 'filterActivities':
+        return [
+          'activity_name.string' => 'Activity name must be a string.',
+          'country_name.string'  => 'Country name must be a string.',
+          'location.string'      => 'Location must be a string.',
+
         ];
 
       default:

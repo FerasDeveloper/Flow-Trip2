@@ -304,4 +304,75 @@ class UserService
       ];
     });
   }
+  // public function filterActivities(array $filters)
+  // {
+  //   $query = Activity_owner::query()
+  //     ->join('activities', 'activity_owners.activity_id', '=', 'activities.id')
+  //     ->join('owners', 'activity_owners.owner_id', '=', 'owners.id')
+  //     ->join('users', 'owners.user_id', '=', 'users.id')
+  //     ->join('countries', 'owners.country_id', '=', 'countries.id')
+  //     ->select(
+  //       'activity_owners.owner_id',
+  //       'owners.description',
+  //       'owners.location',
+  //       'activities.name as activity_name',
+  //       'countries.name as country_name',
+  //       'users.email',
+  //       'users.phone_number'
+  //     );
+
+  //   if (!empty($filters['activity_name'])) {
+  //     $query->where('activities.name', 'like', "%{$filters['activity_name']}%");
+  //   }
+
+  //   if (!empty($filters['country_name'])) {
+  //     $query->where('countries.name', 'like', "%{$filters['country_name']}%");
+  //   }
+
+  //   if (!empty($filters['location'])) {
+  //     $query->where('owners.location', 'like', "%{$filters['location']}%");
+  //   }
+
+  //   return $query->get();
+  // }
+
+  public function filterActivities(array $filters)
+  {
+    $query = Activity_owner::query()
+      ->join('activities', 'activity_owners.activity_id', '=', 'activities.id')
+      ->join('owners', 'activity_owners.owner_id', '=', 'owners.id')
+      ->join('users', 'owners.user_id', '=', 'users.id')
+      ->join('countries', 'owners.country_id', '=', 'countries.id')
+      ->select(
+        'activity_owners.owner_id',
+        'owners.description',
+        'owners.location',
+        'activities.name as activity_name',
+        'countries.name as country_name',
+        'users.email',
+        'users.phone_number'
+      );
+
+    if (!empty($filters['activity_name'])) {
+      $query->where('activities.name', 'like', "%{$filters['activity_name']}%");
+    }
+
+    if (!empty($filters['country_name'])) {
+      $query->where('countries.name', 'like', "%{$filters['country_name']}%");
+    }
+
+    if (!empty($filters['location'])) {
+      $query->where('owners.location', 'like', "%{$filters['location']}%");
+    }
+
+    $results = $query->get();
+
+    if ($results->isEmpty()) {
+      return [
+        'message' => 'Unfortunately, there are no activities at the moment.'
+      ];
+    }
+
+    return $results;
+  }
 }

@@ -32,7 +32,7 @@ Route::get('/getRandomActivity', [UserController::class, 'getRandomActivity']);
 Route::get('/getRandomAccommodations', [UserController::class, 'getRandomAccommodations']);
 Route::post('/filterFlights', [UserController::class, 'filterFlights']);
 Route::post('/searchVehicles',[UserController::class,'searchVehicles']);
-
+Route::post('/filterActivities',[UserController::class,'filterActivities']);
 
 
 

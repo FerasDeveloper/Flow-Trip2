@@ -98,4 +98,33 @@ class UserController extends Controller
 
     return response()->json($vehicles);
   }
+
+  // public function filterActivities(UserRequest $request)
+  // {
+  //   $filters = $request->only(['activity_name', 'country_name', 'location']);
+  //   $result = $this->userservice->filterActivities($filters);
+
+  //   return response()->json([
+  //     'success' => true,
+  //     'data'    => $result
+  //   ]);
+  // }
+  public function filterActivities(UserRequest $request)
+  {
+    $filters = $request->only(['activity_name', 'country_name', 'location']);
+    $result = $this->userservice->filterActivities($filters);
+
+    if (isset($result['message'])) {
+      return response()->json([
+        'success' => false,
+        'message' => $result['message'],
+        'data'    => []
+      ]);
+    }
+
+    return response()->json([
+      'success' => true,
+      'data'    => $result
+    ]);
+  }
 }
