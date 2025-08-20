@@ -111,6 +111,7 @@ class UserService
       ->limit(5)
       ->get();
   }
+
   // public function filterFlights($request)
   // {
   //   $start          = $request->starting_point_location;
@@ -134,14 +135,9 @@ class UserService
   //       return $available >= $passengerCount;
   //     })->values();
 
-  //     if ($flights->isEmpty()) {
-  //       return response()->json(['message' => 'No available flights found.'], 404);
-  //     }
-
-  //     return $flights;
+  //     return $flights->toArray();
   //   }
 
-  //   // اتجاهين
   //   $departureDate = $request->departure_date;
   //   $returnDate    = $request->return_date;
 
@@ -170,7 +166,7 @@ class UserService
   //   })->values();
 
   //   if ($goFlights->isEmpty() || $returnFlights->isEmpty()) {
-  //     return response()->json(['message' => 'No available round trips found.'], 404);
+  //     return [];
   //   }
 
   //   $roundTrips = [];
@@ -189,7 +185,9 @@ class UserService
     $end            = $request->landing_point_location;
     $isRoundTrip    = $request->is_round_trip;
     $passengerCount = (int) $request->passenger_count;
+    $sortBy         = $request->sort_by; // السعر، الأقصر، أو none
 
+    // 🔹 فلترة الذهاب فقط
     if (!$isRoundTrip) {
       $date = $request->date;
 
@@ -202,13 +200,19 @@ class UserService
       $flights = $flights->filter(function ($flight) use ($passengerCount) {
         if (!$flight->Plane) return false;
 
-        $available = $flight->Plane->seats_count - DB::table('user_flights')->where('flight_id', $flight->id)->count();
+        $available = $flight->Plane->seats_count
+          - DB::table('user_flights')->where('flight_id', $flight->id)->count();
+
         return $available >= $passengerCount;
       })->values();
+
+      // ✅ ترتيب النتائج
+      $flights = $this->sortFlights($flights, $sortBy);
 
       return $flights->toArray();
     }
 
+    // 🔹 فلترة الذهاب والإياب
     $departureDate = $request->departure_date;
     $returnDate    = $request->return_date;
 
@@ -226,13 +230,15 @@ class UserService
 
     $goFlights = $goFlights->filter(function ($flight) use ($passengerCount) {
       if (!$flight->Plane) return false;
-      $available = $flight->Plane->seats_count - DB::table('user_flights')->where('flight_id', $flight->id)->count();
+      $available = $flight->Plane->seats_count
+        - DB::table('user_flights')->where('flight_id', $flight->id)->count();
       return $available >= $passengerCount;
     })->values();
 
     $returnFlights = $returnFlights->filter(function ($flight) use ($passengerCount) {
       if (!$flight->Plane) return false;
-      $available = $flight->Plane->seats_count - DB::table('user_flights')->where('flight_id', $flight->id)->count();
+      $available = $flight->Plane->seats_count
+        - DB::table('user_flights')->where('flight_id', $flight->id)->count();
       return $available >= $passengerCount;
     })->values();
 
@@ -243,12 +249,50 @@ class UserService
     $roundTrips = [];
     foreach ($goFlights as $go) {
       foreach ($returnFlights as $ret) {
-        $roundTrips[] = ['go' => $go, 'return' => $ret];
+        $roundTrips[] = [
+          'go'     => $go,
+          'return' => $ret
+        ];
       }
     }
 
-    return $roundTrips;
+    // ✅ ترتيب الذهاب والإياب مع بعض
+    $roundTrips = collect($roundTrips);
+
+    if ($sortBy === 'price') {
+      $roundTrips = $roundTrips->sortBy(function ($trip) {
+        // الأفضل لو تستخدم offer_price إذا موجود وإلا price
+        $goPrice = $trip['go']->offer_price ?: $trip['go']->price;
+        $retPrice = $trip['return']->offer_price ?: $trip['return']->price;
+        return $goPrice + $retPrice;
+      })->values();
+    } elseif ($sortBy === 'shortest') {
+      $roundTrips = $roundTrips->sortBy(function ($trip) {
+        return $trip['go']->estimated_time + $trip['return']->estimated_time;
+      })->values();
+    }
+
+    return $roundTrips->toArray();
   }
+
+  /**
+   * 🔹 دالة مساعدة لترتيب الذهاب فقط
+   */
+  private function sortFlights($flights, $sortBy)
+  {
+    if ($sortBy === 'price') {
+      return $flights->sortBy(function ($flight) {
+        return $flight->offer_price ?: $flight->price;
+      })->values();
+    }
+
+    if ($sortBy === 'shortest') {
+      return $flights->sortBy('estimated_time')->values();
+    }
+
+    return $flights;
+  }
+
   public function searchVehicles(array $filters)
   {
     $query = Vehicle::with([
