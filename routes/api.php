@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AccommodationController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AiController;
 use App\Http\Controllers\AirLineController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GeneralTaskController;
@@ -33,6 +34,9 @@ Route::get('/getRandomAccommodations', [UserController::class, 'getRandomAccommo
 Route::post('/filterFlights', [UserController::class, 'filterFlights']);
 Route::post('/searchVehicles',[UserController::class,'searchVehicles']);
 Route::post('/filterActivities',[UserController::class,'filterActivities']);
+Route::post('/ai/chat', [AiController::class, 'chat']);
+Route::post('/ai/itinerary', [AiController::class, 'itinerary']);
+
 
 
 
