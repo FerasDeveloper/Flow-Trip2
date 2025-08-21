@@ -5,6 +5,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\AirLineController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GeneralTaskController;
+use App\Http\Controllers\StripePaymentController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,12 +23,6 @@ Route::get('/GetAllAccommodationTypes', [GeneralTaskController::class, 'get_all_
 Route::get('/GetAllCarTypes', [GeneralTaskController::class, 'get_all_car_types']);
 Route::get('/GetAllPlaneTypes', [GeneralTaskController::class, 'get_all_plane_types']);
 Route::get('/GetAllServices', [GeneralTaskController::class, 'get_all_services']);
-
-// User
-Route::get('/getRandomPackage', [UserController::class, 'getRandomPackage']);
-Route::get('/getActivity', [UserController::class, 'getActivity']);
-Route::get('/getRandomActivity',[UserController::class,'getRandomActivity']);
-Route::get('/getRandomAccommodations',[UserController::class,'getRandomAccommodations']);
 
 
 
@@ -115,4 +110,13 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::post('/AddRoom', [AccommodationController::class, 'add_room']);
   Route::post('/EditRoom/{id}', [AccommodationController::class, 'edit_room']);
   Route::get('/DeleteRoom/{id}', [AccommodationController::class, 'delete_room']);
+
+  // User
+  Route::get('/getRandomPackage', [UserController::class, 'getRandomPackage']);
+  Route::get('/getActivity', [UserController::class, 'getActivity']);
+  Route::get('/getRandomActivity', [UserController::class, 'getRandomActivity']);
+  Route::get('/getRandomAccommodations', [UserController::class, 'getRandomAccommodations']);
+  Route::post('/FilterAccommodation', [UserController::class, 'filter_accommodation']);
+  Route::post('/BookRoom/{id}', [UserController::class, 'book_room']);
+  Route::post('/BookAccommodation/{id}', [UserController::class, 'book_accommodation']);
 });
