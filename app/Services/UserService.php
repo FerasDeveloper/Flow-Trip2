@@ -9,6 +9,7 @@ use App\Models\Owner;
 use App\Models\Package;
 use App\Models\Package_element;
 use App\Models\Package_element_picture;
+use App\Models\Picture;
 use App\Models\Tourism_company;
 use App\Models\User_package;
 use App\Models\Vehicle;
@@ -45,9 +46,27 @@ class UserService
     });
   }
 
+  // public function getActivity()
+  // {
+  //   return DB::table('activity_owners')
+  //     ->join('activities', 'activity_owners.activity_id', '=', 'activities.id')
+  //     ->join('owners', 'activity_owners.owner_id', '=', 'owners.id')
+  //     ->join('users', 'owners.user_id', '=', 'users.id')
+  //     ->join('countries', 'owners.country_id', '=', 'countries.id')
+  //     ->select(
+  //       'activities.id as id',
+  //       'activities.name as activity_name',
+  //       'activity_owners.owner_name',
+  //       'owners.description',
+  //       'owners.location',
+  //       'users.phone_number',
+  //       'countries.name as country_name'
+  //     )
+  //     ->get();
+  // }
   public function getActivity()
   {
-    return DB::table('activity_owners')
+    $records = DB::table('activity_owners')
       ->join('activities', 'activity_owners.activity_id', '=', 'activities.id')
       ->join('owners', 'activity_owners.owner_id', '=', 'owners.id')
       ->join('users', 'owners.user_id', '=', 'users.id')
@@ -56,34 +75,95 @@ class UserService
         'activities.id as id',
         'activities.name as activity_name',
         'activity_owners.owner_name',
+        'owners.id as owner_id',
         'owners.description',
         'owners.location',
         'users.phone_number',
         'countries.name as country_name'
       )
       ->get();
+
+    return $records->map(function ($record) {
+      $picture = Picture::where('owner_id', $record->owner_id)
+        ->orderBy('id', 'asc')
+        ->value('reference');
+
+      return [
+        'id'            => $record->id,
+        'activity_name' => $record->activity_name,
+        'owner_name'    => $record->owner_name,
+        'description'   => $record->description,
+        'location'      => $record->location,
+        'phone_number'  => $record->phone_number,
+        'country_name'  => $record->country_name,
+        'picture'       => $picture ? url($picture) : null,
+      ];
+    });
   }
+
+
+  // public function getRandomActivity()
+  // {
+  //   $activityOwnersQuery = Activity_owner::query();
+  //   if ($activityOwnersQuery->count() <= 5) {
+  //     $records = $activityOwnersQuery->get();
+  //   } else {
+  //     $records = $activityOwnersQuery->inRandomOrder()->limit(5)->get();
+  //   }
+  //   return $records->map(function ($record) {
+  //     $activity = Activity::find($record->activity_id);
+  //     $ownerData = Owner::join('users', 'owners.user_id', '=', 'users.id')
+  //       ->join('countries', 'owners.country_id', '=', 'countries.id')
+  //       ->where('owners.id', $record->owner_id)
+  //       ->select(
+  //         'owners.description',
+  //         'owners.location',
+  //         'users.phone_number',
+  //         'countries.name as country_name'
+  //       )
+  //       ->first();
+  //     return [
+  //       'id'            => $activity->id ?? null,
+  //       'activity_name' => $activity->name ?? null,
+  //       'owner_name'    => $record->owner_name,
+  //       'description'   => $ownerData->description ?? null,
+  //       'location'      => $ownerData->location ?? null,
+  //       'phone_number'  => $ownerData->phone_number ?? null,
+  //       'country_name'  => $ownerData->country_name ?? null,
+  //     ];
+  //   });
+  // }
 
   public function getRandomActivity()
   {
     $activityOwnersQuery = Activity_owner::query();
+
     if ($activityOwnersQuery->count() <= 5) {
       $records = $activityOwnersQuery->get();
     } else {
       $records = $activityOwnersQuery->inRandomOrder()->limit(5)->get();
     }
+
     return $records->map(function ($record) {
       $activity = Activity::find($record->activity_id);
+
       $ownerData = Owner::join('users', 'owners.user_id', '=', 'users.id')
         ->join('countries', 'owners.country_id', '=', 'countries.id')
         ->where('owners.id', $record->owner_id)
         ->select(
+          'owners.id',
           'owners.description',
           'owners.location',
           'users.phone_number',
           'countries.name as country_name'
         )
         ->first();
+
+      // get first picture for this owner
+      $picture = Picture::where('owner_id', $record->owner_id)
+        ->orderBy('id', 'asc')
+        ->value('reference');
+
       return [
         'id'            => $activity->id ?? null,
         'activity_name' => $activity->name ?? null,
@@ -92,6 +172,7 @@ class UserService
         'location'      => $ownerData->location ?? null,
         'phone_number'  => $ownerData->phone_number ?? null,
         'country_name'  => $ownerData->country_name ?? null,
+        'picture'       => $picture ? url($picture) : null,
       ];
     });
   }
@@ -185,9 +266,8 @@ class UserService
     $end            = $request->landing_point_location;
     $isRoundTrip    = $request->is_round_trip;
     $passengerCount = (int) $request->passenger_count;
-    $sortBy         = $request->sort_by; // السعر، الأقصر، أو none
+    $sortBy         = $request->sort_by;
 
-    // 🔹 فلترة الذهاب فقط
     if (!$isRoundTrip) {
       $date = $request->date;
 
@@ -206,13 +286,11 @@ class UserService
         return $available >= $passengerCount;
       })->values();
 
-      // ✅ ترتيب النتائج
       $flights = $this->sortFlights($flights, $sortBy);
 
       return $flights->toArray();
     }
 
-    // 🔹 فلترة الذهاب والإياب
     $departureDate = $request->departure_date;
     $returnDate    = $request->return_date;
 
@@ -256,12 +334,10 @@ class UserService
       }
     }
 
-    // ✅ ترتيب الذهاب والإياب مع بعض
     $roundTrips = collect($roundTrips);
 
     if ($sortBy === 'price') {
       $roundTrips = $roundTrips->sortBy(function ($trip) {
-        // الأفضل لو تستخدم offer_price إذا موجود وإلا price
         $goPrice = $trip['go']->offer_price ?: $trip['go']->price;
         $retPrice = $trip['return']->offer_price ?: $trip['return']->price;
         return $goPrice + $retPrice;
@@ -275,9 +351,6 @@ class UserService
     return $roundTrips->toArray();
   }
 
-  /**
-   * 🔹 دالة مساعدة لترتيب الذهاب فقط
-   */
   private function sortFlights($flights, $sortBy)
   {
     if ($sortBy === 'price') {
@@ -348,6 +421,7 @@ class UserService
       ];
     });
   }
+
   // public function filterActivities(array $filters)
   // {
   //   $query = Activity_owner::query()
@@ -377,8 +451,17 @@ class UserService
   //     $query->where('owners.location', 'like', "%{$filters['location']}%");
   //   }
 
-  //   return $query->get();
+  //   $results = $query->get();
+
+  //   if ($results->isEmpty()) {
+  //     return [
+  //       'message' => 'Unfortunately, there are no activities at the moment.'
+  //     ];
+  //   }
+
+  //   return $results;
   // }
+
 
   public function filterActivities(array $filters)
   {
@@ -417,6 +500,20 @@ class UserService
       ];
     }
 
-    return $results;
+    return $results->map(function ($record) {
+      $picture = Picture::where('owner_id', $record->owner_id)
+        ->orderBy('id', 'asc')
+        ->value('reference');
+
+      return [
+        'activity_name' => $record->activity_name,
+        'description'   => $record->description,
+        'location'      => $record->location,
+        'country_name'  => $record->country_name,
+        'email'         => $record->email,
+        'phone_number'  => $record->phone_number,
+        'picture'       => $picture ? url($picture) : null,
+      ];
+    });
   }
 }
