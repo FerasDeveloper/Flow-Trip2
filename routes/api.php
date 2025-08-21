@@ -2,11 +2,13 @@
 
 use App\Http\Controllers\AccommodationController;
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AiController;
 use App\Http\Controllers\AirLineController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GeneralTaskController;
-use App\Http\Controllers\StripePaymentController;
+use App\Http\Controllers\TourismCompanyController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\VehiclyController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/CreateUser', [AuthController::class, 'user_Register']);
@@ -23,6 +25,17 @@ Route::get('/GetAllAccommodationTypes', [GeneralTaskController::class, 'get_all_
 Route::get('/GetAllCarTypes', [GeneralTaskController::class, 'get_all_car_types']);
 Route::get('/GetAllPlaneTypes', [GeneralTaskController::class, 'get_all_plane_types']);
 Route::get('/GetAllServices', [GeneralTaskController::class, 'get_all_services']);
+
+// User
+Route::get('/getRandomPackage', [UserController::class, 'getRandomPackage']);
+Route::get('/getActivity', [UserController::class, 'getActivity']);
+Route::get('/getRandomActivity', [UserController::class, 'getRandomActivity']);
+Route::get('/getRandomAccommodations', [UserController::class, 'getRandomAccommodations']);
+Route::post('/filterFlights', [UserController::class, 'filterFlights']);
+Route::post('/searchVehicles',[UserController::class,'searchVehicles']);
+Route::post('/filterActivities',[UserController::class,'filterActivities']);
+Route::post('/ai/chat', [AiController::class, 'chat']);
+Route::post('/ai/itinerary', [AiController::class, 'itinerary']);
 
 
 
@@ -119,4 +132,36 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::post('/FilterAccommodation', [UserController::class, 'filter_accommodation']);
   Route::post('/BookRoom/{id}', [UserController::class, 'book_room']);
   Route::post('/BookAccommodation/{id}', [UserController::class, 'book_accommodation']);
+
+
+  
+  // tourism company
+  Route::prefix('tourism')->group(function () {
+    Route::post('/createPackage', [TourismCompanyController::class, 'createPackage']);
+    Route::post('/editPackage/{id}', [TourismCompanyController::class, 'editPackage']);
+    Route::delete('/deletePackage/{id}', [TourismCompanyController::class, 'deletePackage']);
+    Route::get('/getPackagesfortourism', [TourismCompanyController::class, 'getPackagesfortourism']);
+    Route::post('/addPackageElement/{id}', [TourismCompanyController::class, 'addPackageElement']);
+    Route::post('/editPackageElement/{id}', [TourismCompanyController::class, 'editPackageElement']);
+    Route::delete('/deletePackageElement/{id}', [TourismCompanyController::class, 'deletePackageElement']);
+    Route::get('/getPictureForElement/{id}', [TourismCompanyController::class, 'getPictureForElement']);
+    Route::post('/addPictureElement/{id}', [TourismCompanyController::class, 'addPictureElement']);
+    Route::delete('/deleteElementPicture/{id}', [TourismCompanyController::class, 'deleteElementPicture']);
+    Route::get('/getrecordsforpackage/{id}', [TourismCompanyController::class, 'getrecordsforpackage']);
+    Route::get('/getMostPopularPackagesForCompany', [TourismCompanyController::class, 'getMostPopularPackagesForCompany']);
+    Route::get('/getElementPackageById/{id}', [TourismCompanyController::class, 'getElementPackageById']);
+  });
+
+
+    // Vehicly Owner
+  Route::prefix('vehicleowner')->group(function () {
+    Route::post('/createVehicle', [VehiclyController::class, 'createVehicly']);
+    Route::post('/editVehicle/{id}', [VehiclyController::class, 'editVehicly']);
+    Route::delete('/deleteVehicly/{id}', [VehiclyController::class, 'deleteVehicly']);
+    Route::post('/createPictureCar', [VehiclyController::class, 'createPictureCar']);
+    Route::get('/getAllPicture/{id}', [VehiclyController::class, 'getAllPicture']);
+    Route::delete('/deletePictureCar/{id}', [VehiclyController::class, 'deletePictureCar']);
+    Route::get('/getAllViclyForuser/{id}', [VehiclyController::class, 'getAllViclyForuser']);
+    Route::get('/getVehicleById/{id}', [VehiclyController::class, 'getVehicleById']);
+  });
 });

@@ -6,21 +6,24 @@ use App\Models\Accommodation;
 use App\Models\Accommodation_type;
 use App\Models\Activity;
 use App\Models\Activity_owner;
+use App\Models\Flight;
 use App\Models\Owner;
 use App\Models\Package;
 use App\Models\Package_element;
 use App\Models\Package_element_picture;
 use App\Models\Room;
+use App\Models\Picture;
 use App\Models\Tourism_company;
 use App\Models\User;
 use App\Models\User_accommodation;
 use App\Models\User_package;
 use App\Models\User_room;
+use App\Models\Vehicle;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Exception;
 
 class UserService
 {
@@ -48,9 +51,27 @@ class UserService
     });
   }
 
+  // public function getActivity()
+  // {
+  //   return DB::table('activity_owners')
+  //     ->join('activities', 'activity_owners.activity_id', '=', 'activities.id')
+  //     ->join('owners', 'activity_owners.owner_id', '=', 'owners.id')
+  //     ->join('users', 'owners.user_id', '=', 'users.id')
+  //     ->join('countries', 'owners.country_id', '=', 'countries.id')
+  //     ->select(
+  //       'activities.id as id',
+  //       'activities.name as activity_name',
+  //       'activity_owners.owner_name',
+  //       'owners.description',
+  //       'owners.location',
+  //       'users.phone_number',
+  //       'countries.name as country_name'
+  //     )
+  //     ->get();
+  // }
   public function getActivity()
   {
-    return DB::table('activity_owners')
+    $records = DB::table('activity_owners')
       ->join('activities', 'activity_owners.activity_id', '=', 'activities.id')
       ->join('owners', 'activity_owners.owner_id', '=', 'owners.id')
       ->join('users', 'owners.user_id', '=', 'users.id')
@@ -59,34 +80,95 @@ class UserService
         'activities.id as id',
         'activities.name as activity_name',
         'activity_owners.owner_name',
+        'owners.id as owner_id',
         'owners.description',
         'owners.location',
         'users.phone_number',
         'countries.name as country_name'
       )
       ->get();
+
+    return $records->map(function ($record) {
+      $picture = Picture::where('owner_id', $record->owner_id)
+        ->orderBy('id', 'asc')
+        ->value('reference');
+
+      return [
+        'id'            => $record->id,
+        'activity_name' => $record->activity_name,
+        'owner_name'    => $record->owner_name,
+        'description'   => $record->description,
+        'location'      => $record->location,
+        'phone_number'  => $record->phone_number,
+        'country_name'  => $record->country_name,
+        'picture'       => $picture ? url($picture) : null,
+      ];
+    });
   }
+
+
+  // public function getRandomActivity()
+  // {
+  //   $activityOwnersQuery = Activity_owner::query();
+  //   if ($activityOwnersQuery->count() <= 5) {
+  //     $records = $activityOwnersQuery->get();
+  //   } else {
+  //     $records = $activityOwnersQuery->inRandomOrder()->limit(5)->get();
+  //   }
+  //   return $records->map(function ($record) {
+  //     $activity = Activity::find($record->activity_id);
+  //     $ownerData = Owner::join('users', 'owners.user_id', '=', 'users.id')
+  //       ->join('countries', 'owners.country_id', '=', 'countries.id')
+  //       ->where('owners.id', $record->owner_id)
+  //       ->select(
+  //         'owners.description',
+  //         'owners.location',
+  //         'users.phone_number',
+  //         'countries.name as country_name'
+  //       )
+  //       ->first();
+  //     return [
+  //       'id'            => $activity->id ?? null,
+  //       'activity_name' => $activity->name ?? null,
+  //       'owner_name'    => $record->owner_name,
+  //       'description'   => $ownerData->description ?? null,
+  //       'location'      => $ownerData->location ?? null,
+  //       'phone_number'  => $ownerData->phone_number ?? null,
+  //       'country_name'  => $ownerData->country_name ?? null,
+  //     ];
+  //   });
+  // }
 
   public function getRandomActivity()
   {
     $activityOwnersQuery = Activity_owner::query();
+
     if ($activityOwnersQuery->count() <= 5) {
       $records = $activityOwnersQuery->get();
     } else {
       $records = $activityOwnersQuery->inRandomOrder()->limit(5)->get();
     }
+
     return $records->map(function ($record) {
       $activity = Activity::find($record->activity_id);
+
       $ownerData = Owner::join('users', 'owners.user_id', '=', 'users.id')
         ->join('countries', 'owners.country_id', '=', 'countries.id')
         ->where('owners.id', $record->owner_id)
         ->select(
+          'owners.id',
           'owners.description',
           'owners.location',
           'users.phone_number',
           'countries.name as country_name'
         )
         ->first();
+
+      // get first picture for this owner
+      $picture = Picture::where('owner_id', $record->owner_id)
+        ->orderBy('id', 'asc')
+        ->value('reference');
+
       return [
         'id' => $activity->id ?? null,
         'activity_name' => $activity->name ?? null,
@@ -95,6 +177,12 @@ class UserService
         'location' => $ownerData->location ?? null,
         'phone_number' => $ownerData->phone_number ?? null,
         'country_name' => $ownerData->country_name ?? null,
+        'owner_name'    => $record->owner_name,
+        'description'   => $ownerData->description ?? null,
+        'location'      => $ownerData->location ?? null,
+        'phone_number'  => $ownerData->phone_number ?? null,
+        'country_name'  => $ownerData->country_name ?? null,
+        'picture'       => $picture ? url($picture) : null,
       ];
     });
   }
@@ -389,4 +477,327 @@ class UserService
     ];
   }
 
+  // public function filterFlights($request)
+  // {
+  //   $start          = $request->starting_point_location;
+  //   $end            = $request->landing_point_location;
+  //   $isRoundTrip    = $request->is_round_trip;
+  //   $passengerCount = (int) $request->passenger_count;
+
+  //   if (!$isRoundTrip) {
+  //     $date = $request->date;
+
+  //     $flights = Flight::with(['Air_line', 'Plane', 'Seat'])
+  //       ->where('starting_point_location', $start)
+  //       ->where('landing_point_location', $end)
+  //       ->whereDate('date', $date)
+  //       ->get();
+
+  //     $flights = $flights->filter(function ($flight) use ($passengerCount) {
+  //       if (!$flight->Plane) return false;
+
+  //       $available = $flight->Plane->seats_count - DB::table('user_flights')->where('flight_id', $flight->id)->count();
+  //       return $available >= $passengerCount;
+  //     })->values();
+
+  //     return $flights->toArray();
+  //   }
+
+  //   $departureDate = $request->departure_date;
+  //   $returnDate    = $request->return_date;
+
+  //   $goFlights = Flight::with(['Air_line', 'Plane', 'Seat'])
+  //     ->where('starting_point_location', $start)
+  //     ->where('landing_point_location', $end)
+  //     ->whereDate('date', $departureDate)
+  //     ->get();
+
+  //   $returnFlights = Flight::with(['Air_line', 'Plane', 'Seat'])
+  //     ->where('starting_point_location', $end)
+  //     ->where('landing_point_location', $start)
+  //     ->whereDate('date', $returnDate)
+  //     ->get();
+
+  //   $goFlights = $goFlights->filter(function ($flight) use ($passengerCount) {
+  //     if (!$flight->Plane) return false;
+  //     $available = $flight->Plane->seats_count - DB::table('user_flights')->where('flight_id', $flight->id)->count();
+  //     return $available >= $passengerCount;
+  //   })->values();
+
+  //   $returnFlights = $returnFlights->filter(function ($flight) use ($passengerCount) {
+  //     if (!$flight->Plane) return false;
+  //     $available = $flight->Plane->seats_count - DB::table('user_flights')->where('flight_id', $flight->id)->count();
+  //     return $available >= $passengerCount;
+  //   })->values();
+
+  //   if ($goFlights->isEmpty() || $returnFlights->isEmpty()) {
+  //     return [];
+  //   }
+
+  //   $roundTrips = [];
+  //   foreach ($goFlights as $go) {
+  //     foreach ($returnFlights as $ret) {
+  //       $roundTrips[] = ['go' => $go, 'return' => $ret];
+  //     }
+  //   }
+
+  //   return $roundTrips;
+  // }
+
+  public function filterFlights($request)
+  {
+    $start          = $request->starting_point_location;
+    $end            = $request->landing_point_location;
+    $isRoundTrip    = $request->is_round_trip;
+    $passengerCount = (int) $request->passenger_count;
+    $sortBy         = $request->sort_by;
+
+    if (!$isRoundTrip) {
+      $date = $request->date;
+
+      $flights = Flight::with(['Air_line', 'Plane', 'Seat'])
+        ->where('starting_point_location', $start)
+        ->where('landing_point_location', $end)
+        ->whereDate('date', $date)
+        ->get();
+
+      $flights = $flights->filter(function ($flight) use ($passengerCount) {
+        if (!$flight->Plane) return false;
+
+        $available = $flight->Plane->seats_count
+          - DB::table('user_flights')->where('flight_id', $flight->id)->count();
+
+        return $available >= $passengerCount;
+      })->values();
+
+      $flights = $this->sortFlights($flights, $sortBy);
+
+      return $flights->toArray();
+    }
+
+    $departureDate = $request->departure_date;
+    $returnDate    = $request->return_date;
+
+    $goFlights = Flight::with(['Air_line', 'Plane', 'Seat'])
+      ->where('starting_point_location', $start)
+      ->where('landing_point_location', $end)
+      ->whereDate('date', $departureDate)
+      ->get();
+
+    $returnFlights = Flight::with(['Air_line', 'Plane', 'Seat'])
+      ->where('starting_point_location', $end)
+      ->where('landing_point_location', $start)
+      ->whereDate('date', $returnDate)
+      ->get();
+
+    $goFlights = $goFlights->filter(function ($flight) use ($passengerCount) {
+      if (!$flight->Plane) return false;
+      $available = $flight->Plane->seats_count
+        - DB::table('user_flights')->where('flight_id', $flight->id)->count();
+      return $available >= $passengerCount;
+    })->values();
+
+    $returnFlights = $returnFlights->filter(function ($flight) use ($passengerCount) {
+      if (!$flight->Plane) return false;
+      $available = $flight->Plane->seats_count
+        - DB::table('user_flights')->where('flight_id', $flight->id)->count();
+      return $available >= $passengerCount;
+    })->values();
+
+    if ($goFlights->isEmpty() || $returnFlights->isEmpty()) {
+      return [];
+    }
+
+    $roundTrips = [];
+    foreach ($goFlights as $go) {
+      foreach ($returnFlights as $ret) {
+        $roundTrips[] = [
+          'go'     => $go,
+          'return' => $ret
+        ];
+      }
+    }
+
+    $roundTrips = collect($roundTrips);
+
+    if ($sortBy === 'price') {
+      $roundTrips = $roundTrips->sortBy(function ($trip) {
+        $goPrice = $trip['go']->offer_price ?: $trip['go']->price;
+        $retPrice = $trip['return']->offer_price ?: $trip['return']->price;
+        return $goPrice + $retPrice;
+      })->values();
+    } elseif ($sortBy === 'shortest') {
+      $roundTrips = $roundTrips->sortBy(function ($trip) {
+        return $trip['go']->estimated_time + $trip['return']->estimated_time;
+      })->values();
+    }
+
+    return $roundTrips->toArray();
+  }
+
+  private function sortFlights($flights, $sortBy)
+  {
+    if ($sortBy === 'price') {
+      return $flights->sortBy(function ($flight) {
+        return $flight->offer_price ?: $flight->price;
+      })->values();
+    }
+
+    if ($sortBy === 'shortest') {
+      return $flights->sortBy('estimated_time')->values();
+    }
+
+    return $flights;
+  }
+
+  public function searchVehicles(array $filters)
+  {
+    $query = Vehicle::with([
+      'car_type:id,name',
+      'vehicle_owner.owner.user:id,email,phone_number',
+      'vehicle_owner.owner.country:id,name'
+    ])->select(
+      'id',
+      'vehicle_owner_id',
+      'car_type_id',
+      'car_discription',
+      'people_count',
+      'name'
+    );
+
+    if (!empty($filters['location'])) {
+      $query->whereHas('vehicle_owner.owner', function ($q) use ($filters) {
+        $q->where('location', 'like', '%' . $filters['location'] . '%');
+      });
+    }
+
+    if (!empty($filters['vehicle_name'])) {
+      $query->where('name', 'like', '%' . $filters['vehicle_name'] . '%');
+    }
+
+    if (!empty($filters['car_type'])) {
+      $query->where('car_type_id', $filters['car_type']);
+    }
+
+    if (!empty($filters['people_count'])) {
+      $query->where('people_count', $filters['people_count']);
+    }
+
+    return $query->get()->map(function ($vehicle) {
+      return [
+        'id'              => $vehicle->id,
+        'car_discription' => $vehicle->car_discription,
+        'people_count'    => $vehicle->people_count,
+        'name'            => $vehicle->name,
+        'car_type_name'   => $vehicle->car_type?->name,
+        'vehicle_owner'   => [
+          'id'         => $vehicle->vehicle_owner->id ?? null,
+          'owner_name' => $vehicle->vehicle_owner->owner_name ?? null,
+          'location'   => $vehicle->vehicle_owner->owner->location ?? null,
+          'user'       => [
+            'email'        => $vehicle->vehicle_owner->owner->user->email ?? null,
+            'phone_number' => $vehicle->vehicle_owner->owner->user->phone_number ?? null,
+          ],
+          'country'    => [
+            'name' => $vehicle->vehicle_owner->owner->country->name ?? null,
+          ],
+        ],
+      ];
+    });
+  }
+
+  // public function filterActivities(array $filters)
+  // {
+  //   $query = Activity_owner::query()
+  //     ->join('activities', 'activity_owners.activity_id', '=', 'activities.id')
+  //     ->join('owners', 'activity_owners.owner_id', '=', 'owners.id')
+  //     ->join('users', 'owners.user_id', '=', 'users.id')
+  //     ->join('countries', 'owners.country_id', '=', 'countries.id')
+  //     ->select(
+  //       'activity_owners.owner_id',
+  //       'owners.description',
+  //       'owners.location',
+  //       'activities.name as activity_name',
+  //       'countries.name as country_name',
+  //       'users.email',
+  //       'users.phone_number'
+  //     );
+
+  //   if (!empty($filters['activity_name'])) {
+  //     $query->where('activities.name', 'like', "%{$filters['activity_name']}%");
+  //   }
+
+  //   if (!empty($filters['country_name'])) {
+  //     $query->where('countries.name', 'like', "%{$filters['country_name']}%");
+  //   }
+
+  //   if (!empty($filters['location'])) {
+  //     $query->where('owners.location', 'like', "%{$filters['location']}%");
+  //   }
+
+  //   $results = $query->get();
+
+  //   if ($results->isEmpty()) {
+  //     return [
+  //       'message' => 'Unfortunately, there are no activities at the moment.'
+  //     ];
+  //   }
+
+  //   return $results;
+  // }
+
+
+  public function filterActivities(array $filters)
+  {
+    $query = Activity_owner::query()
+      ->join('activities', 'activity_owners.activity_id', '=', 'activities.id')
+      ->join('owners', 'activity_owners.owner_id', '=', 'owners.id')
+      ->join('users', 'owners.user_id', '=', 'users.id')
+      ->join('countries', 'owners.country_id', '=', 'countries.id')
+      ->select(
+        'activity_owners.owner_id',
+        'owners.description',
+        'owners.location',
+        'activities.name as activity_name',
+        'countries.name as country_name',
+        'users.email',
+        'users.phone_number'
+      );
+
+    if (!empty($filters['activity_name'])) {
+      $query->where('activities.name', 'like', "%{$filters['activity_name']}%");
+    }
+
+    if (!empty($filters['country_name'])) {
+      $query->where('countries.name', 'like', "%{$filters['country_name']}%");
+    }
+
+    if (!empty($filters['location'])) {
+      $query->where('owners.location', 'like', "%{$filters['location']}%");
+    }
+
+    $results = $query->get();
+
+    if ($results->isEmpty()) {
+      return [
+        'message' => 'Unfortunately, there are no activities at the moment.'
+      ];
+    }
+
+    return $results->map(function ($record) {
+      $picture = Picture::where('owner_id', $record->owner_id)
+        ->orderBy('id', 'asc')
+        ->value('reference');
+
+      return [
+        'activity_name' => $record->activity_name,
+        'description'   => $record->description,
+        'location'      => $record->location,
+        'country_name'  => $record->country_name,
+        'email'         => $record->email,
+        'phone_number'  => $record->phone_number,
+        'picture'       => $picture ? url($picture) : null,
+      ];
+    });
+  }
 }

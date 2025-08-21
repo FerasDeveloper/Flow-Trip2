@@ -51,7 +51,7 @@ class UserController extends Controller
 
   public function getRandomAccommodations()
   {
-    $accommodations = $this->userservice->getRandomAccommodations(5);
+    $accommodations = $this->userservice->getRandomAccommodations();
 
     return response()->json($accommodations);
   }
@@ -125,5 +125,75 @@ class UserController extends Controller
     } catch (Exception $e) {
       return response()->json(['error' => 'An error occurred: ' . $e->getMessage()], 500);
     }
+  // public function filterFlights(Request $request)
+  // {
+  //   $flights = $this->userservice->filterFlights($request);
+
+  //   return response()->json([
+  //     'status' => true,
+  //     'data'   => $flights
+  //   ]);
+  // }
+  }
+
+  public function filterFlights(UserRequest $request)
+  {
+    $flights = $this->userservice->filterFlights($request);
+
+    if (empty($flights)) {
+      return response()->json([
+        'status'  => false,
+        'message' => 'no flights found',
+        'data'    => []
+      ]);
+    }
+
+    return response()->json([
+      'status' => true,
+      'data'   => $flights
+    ]);
+  }
+  public function searchVehicles(UserRequest $request)
+  {
+    $filters = $request->only(['location', 'vehicle_name', 'car_type', 'people_count']);
+    $vehicles = $this->userservice->searchVehicles($filters);
+
+    if ($vehicles->isEmpty()) {
+      return response()->json([
+        'message' => 'no car found that s match',
+        'data' => []
+      ], 200);
+    }
+
+    return response()->json($vehicles);
+  }
+
+  // public function filterActivities(UserRequest $request)
+  // {
+  //   $filters = $request->only(['activity_name', 'country_name', 'location']);
+  //   $result = $this->userservice->filterActivities($filters);
+
+  //   return response()->json([
+  //     'success' => true,
+  //     'data'    => $result
+  //   ]);
+  // }
+  public function filterActivities(UserRequest $request)
+  {
+    $filters = $request->only(['activity_name', 'country_name', 'location']);
+    $result = $this->userservice->filterActivities($filters);
+
+    if (isset($result['message'])) {
+      return response()->json([
+        'success' => false,
+        'message' => $result['message'],
+        'data'    => []
+      ]);
+    }
+
+    return response()->json([
+      'success' => true,
+      'data'    => $result
+    ]);
   }
 }

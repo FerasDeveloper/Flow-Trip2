@@ -27,7 +27,7 @@ class Owner extends Model
   }
 
   public function Country(){
-    return $this->belongsToMany(Country::class);
+    return $this->belongsTo(Country::class);
   }
 
   public function Service(){
