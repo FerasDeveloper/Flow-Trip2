@@ -196,4 +196,13 @@ class UserController extends Controller
       'data'    => $result
     ]);
   }
+
+  public function getAllVehicles()
+  {
+    $vehicles = $this->userservice->getAllVehicles();
+    return response()->json([
+      'status' => 'success',
+      'data' => $vehicles
+    ], 200);
+  }
 }

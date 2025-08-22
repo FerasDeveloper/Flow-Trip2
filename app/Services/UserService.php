@@ -801,4 +801,43 @@ class UserService
       ];
     });
   }
+
+  public function getAllVehicles()
+  {
+    return Vehicle::select(
+      'vehicles.id',
+      'vehicles.name as vehicle_name',
+      'vehicles.car_discription',
+      'vehicles.people_count',
+      'car_types.name as car_type',
+      'vehicle_owners.owner_name',
+      'owners.location',
+      'users.email',
+      'users.phone_number'
+    )
+      ->join('car_types', 'vehicles.car_type_id', '=', 'car_types.id')
+      ->join('vehicle_owners', 'vehicles.vehicle_owner_id', '=', 'vehicle_owners.id')
+      ->join('owners', 'vehicle_owners.owner_id', '=', 'owners.id')
+      ->join('users', 'owners.user_id', '=', 'users.id')
+      ->with(['car_picture' => function ($query) {
+        $query->select('vehicle_id', 'picture_path')->limit(1); // أول صورة فقط
+      }])
+      ->get()
+      ->map(function ($vehicle) {
+        return [
+          'id'            => $vehicle->id,
+          'name'          => $vehicle->vehicle_name,
+          'description'   => $vehicle->car_discription,
+          'people_count'  => $vehicle->people_count,
+          'car_type'      => $vehicle->car_type,
+          'owner_name'    => $vehicle->owner_name,
+          'location'      => $vehicle->location,
+          'email'         => $vehicle->email,
+          'phone_number'  => $vehicle->phone_number,
+          'picture'       => $vehicle->car_picture->first()
+            ? asset('storage/' . $vehicle->car_picture->first()->picture_path)
+            : null,
+        ];
+      });
+  }
 }
