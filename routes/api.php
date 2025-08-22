@@ -36,7 +36,7 @@ Route::post('/searchVehicles',[UserController::class,'searchVehicles']);
 Route::post('/filterActivities',[UserController::class,'filterActivities']);
 Route::post('/ai/chat', [AiController::class, 'chat']);
 Route::post('/ai/itinerary', [AiController::class, 'itinerary']);
-
+Route::get('/getAllVehicles',[UserController::class,'getAllVehicles']);
 
 
 
