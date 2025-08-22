@@ -124,6 +124,14 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::post('/EditRoom/{id}', [AccommodationController::class, 'edit_room']);
   Route::get('/DeleteRoom/{id}', [AccommodationController::class, 'delete_room']);
 
+  // User
+  Route::get('/getRandomPackage', [UserController::class, 'getRandomPackage']);
+  Route::get('/getActivity', [UserController::class, 'getActivity']);
+  Route::get('/getRandomActivity', [UserController::class, 'getRandomActivity']);
+  Route::get('/getRandomAccommodations', [UserController::class, 'getRandomAccommodations']);
+  Route::post('/FilterAccommodation', [UserController::class, 'filter_accommodation']);
+  Route::post('/BookRoom/{id}', [UserController::class, 'book_room']);
+  Route::post('/BookAccommodation/{id}', [UserController::class, 'book_accommodation']);
 
 
   

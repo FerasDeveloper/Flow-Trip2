@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\SocialController;
+use App\Http\Controllers\StripePaymentController;
 use Illuminate\Support\Facades\Route;
 
 /*

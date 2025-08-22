@@ -47,7 +47,6 @@ class AccommodationRequest extends FormRequest
             Rule::unique('rooms', 'room_number')
               ->ignore($this->route('id'))
           ],
-
         ];
 
       default:

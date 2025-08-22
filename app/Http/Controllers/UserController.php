@@ -3,21 +3,22 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\UserRequest;
+use App\Services\PaymentService;
 use App\Services\UserService;
-use Illuminate\Http\Request;
+use Exception;
 
 class UserController extends Controller
 {
   //
 
-
   protected $userservice;
+  protected $paymentService;
 
-  public function __construct(UserService $userservice)
+  public function __construct(UserService $userservice, PaymentService $paymentService)
   {
     $this->userservice = $userservice;
+    $this->paymentService = $paymentService;
   }
-
 
   public function getRandomPackage()
   {
@@ -41,7 +42,6 @@ class UserController extends Controller
     return response()->json($data);
   }
 
-
   public function getActivity()
   {
     $data = $this->userservice->getActivity();
@@ -56,6 +56,75 @@ class UserController extends Controller
     return response()->json($accommodations);
   }
 
+  public function filter_accommodation(UserRequest $request)
+  {
+    return response()->json($this->userservice->filter_accommodation($request->validated()));
+  }
+
+  public function book_room(UserRequest $request, $id)
+  {
+    try {
+      $validatedData = $request->validated();
+      $availabilityCheck = $this->userservice->check_room_availability($id, $validatedData['start_date'], $validatedData['end_date']);
+
+      if (!$availabilityCheck['available']) {
+        return response()->json([
+          'success' => false,
+          'message' => $availabilityCheck['message']
+        ]);
+      }
+
+      $payment = $this->paymentService->processPayment($validatedData);
+
+      if ($payment['success'] == true) {
+        unset($validatedData['stripeToken'], $validatedData['amount']);
+
+        $bookingResult = $this->userservice->book_room($validatedData, $id);
+
+        return response()->json([
+          'success' => true,
+          'payment' => $payment,
+          'booking' => $bookingResult
+        ]);
+      } else {
+        return response()->json('Something went wrong');
+      }
+    } catch (Exception $e) {
+      return response()->json(['error' => 'An error occurred: ' . $e->getMessage()], 500);
+    }
+  }
+
+  public function book_accommodation(UserRequest $request, $id)
+  {
+    try {
+      $validatedData = $request->validated();
+      $availabilityCheck = $this->userservice->check_accommodation_availability($id, $validatedData['start_date'], $validatedData['end_date']);
+
+      if (!$availabilityCheck['available']) {
+        return response()->json([
+          'success' => false,
+          'message' => $availabilityCheck['message']
+        ]);
+      }
+
+      $payment = $this->paymentService->processPayment($validatedData);
+
+      if ($payment['success'] == true) {
+        unset($validatedData['stripeToken'], $validatedData['amount']);
+
+        $bookingResult = $this->userservice->book_accommodation($validatedData, $id);
+
+        return response()->json([
+          'success' => true,
+          'payment' => $payment,
+          'booking' => $bookingResult
+        ]);
+      } else {
+        return response()->json('Something went wrong');
+      }
+    } catch (Exception $e) {
+      return response()->json(['error' => 'An error occurred: ' . $e->getMessage()], 500);
+    }
   // public function filterFlights(Request $request)
   // {
   //   $flights = $this->userservice->filterFlights($request);
@@ -65,7 +134,7 @@ class UserController extends Controller
   //     'data'   => $flights
   //   ]);
   // }
-
+  }
 
   public function filterFlights(UserRequest $request)
   {

@@ -160,6 +160,7 @@ return [
 
 
       Laravel\Socialite\SocialiteServiceProvider::class,
+      // Srmklive\PayPal\Providers\PayPalServiceProvider::class,
 
         /*
          * Package Service Providers...

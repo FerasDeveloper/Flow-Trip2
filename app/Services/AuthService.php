@@ -16,13 +16,13 @@ use Illuminate\Support\Facades\Mail;
 
 class AuthService
 {
-  
+
   public function user_Register(array $request)
   {
 
     $code = rand(111111, 999999);
 
-    if($request['phone_number'] != null){
+    if ($request['phone_number'] != null) {
       $user = User::query()->create([
         'name' => $request['name'],
         'email' => $request['email'],
@@ -30,8 +30,7 @@ class AuthService
         'phone_number' => $request['phone_number'],
         'role_id' => $request['role_id'],
       ]);
-    }
-    else{
+    } else {
       $user = User::query()->create([
         'name' => $request['name'],
         'email' => $request['email'],
@@ -47,20 +46,18 @@ class AuthService
     Cache::put($user->id, $code, now()->addMinutes(3));
 
     Mail::raw($emailBody, function ($message) use ($user) {
-        $message->to($user->email)
-                ->subject('Flow Trip - email verification');
+      $message->to($user->email)
+        ->subject('Flow Trip - email verification');
     });
 
-    if($user['role_id'] == 3){
-        $user['token'] = $user->createToken('AccessToken')->plainTextToken;
-        return ['token' => $user['token']];
-    }
-    else if($user['role_id'] == 4){
-        $user->update( [ 'status' => 1 ] );
+    if ($user['role_id'] == 3) {
+      $user['token'] = $user->createToken('AccessToken')->plainTextToken;
+      return ['token' => $user['token']];
+    } else if ($user['role_id'] == 4) {
+      $user->update(['status' => 1]);
     }
 
-     return [];
-
+    return [];
   }
 
 
@@ -68,7 +65,7 @@ class AuthService
   {
     $user = User::query()->where('email', $email)->first();
     $code = rand(111111, 999999);
-    
+
     $emailBody = "Hello {$user->name}!
     \n\nWelcome to FlowTrip! There is just one more step befor you reach the site.
     \nverify your email address by this verification code:
@@ -77,10 +74,9 @@ class AuthService
     Cache::put($user->id, $code, now()->addMinutes(3));
 
     Mail::raw($emailBody, function ($message) use ($user) {
-        $message->to($user->email)
-                ->subject('Flow Trip - email verification');
+      $message->to($user->email)
+        ->subject('Flow Trip - email verification');
     });
-
   }
 
   public function verification(array $request, string $email)
@@ -88,7 +84,7 @@ class AuthService
     $user = User::query()->where('email', $email)->first();
     $cache_value = Cache::get($user->id);
 
-    if($cache_value && ($request['verification_code'] == $cache_value)){
+    if ($cache_value && ($request['verification_code'] == $cache_value)) {
 
       $update = User::query()->where('email', $email)->first();
       $user->email_verified_at = now();
@@ -97,7 +93,7 @@ class AuthService
     }
     return false;
   }
-    
+
 
   public function reset_password(array $request, string $email)
   {
@@ -105,7 +101,6 @@ class AuthService
 
     $user->password = $request['new_password'];
     $user->save();
-
   }
 
 
@@ -113,14 +108,14 @@ class AuthService
   {
     $user = User::query()->where('email', $email)->first();
     if ($user['role_id'] != 4) {
-        return 'something went wrong';
+      return 'something went wrong';
     }
 
     $id = $user['id'];
     $owner = Owner::query()->where('user_id', $id)->first();
     $auth_request = Auth_request::query()->where('user_id', $id)->first();
     if ($owner || $auth_request) {
-        return 'You already have an account.';
+      return 'You already have an account.';
     }
 
     $create_auth_request = Auth_request::query()->create([
@@ -131,15 +126,14 @@ class AuthService
       'business_name' => $request['business_name'],
       'user_id' => $user['id'],
     ]);
-    if($request['owner_category_id'] == 1){
-        Auth_request::query()->where('user_id', $id)->update( [ 
-            'accommodation_type' => $request['accommodation_type'] 
-        ] );
-    }
-    else if($request['owner_category_id'] == 5){
-        Auth_request::query()->where('user_id', $id)->update( [ 
-            'activity_name' => $request['activity_name'] 
-        ] );
+    if ($request['owner_category_id'] == 1) {
+      Auth_request::query()->where('user_id', $id)->update([
+        'accommodation_type' => $request['accommodation_type']
+      ]);
+    } else if ($request['owner_category_id'] == 5) {
+      Auth_request::query()->where('user_id', $id)->update([
+        'activity_name' => $request['activity_name']
+      ]);
     }
 
     return 'your request has been sent to the technical team.. pleas wait until the request processed.';
@@ -152,29 +146,27 @@ class AuthService
     $user = User::query()->where('email', $request['email'])->first();
 
     if ($user && Hash::check($request['password'], $user->password)) {
-        if ($user['status'] == 2) {
-          return 'banned';
-        }
-        else if ($user['status'] == 1) {
-          return 'pending';
-        }
-        // else if ($user['email_verified_at'] == null) {
-        //   return 'unverified';
-        // }
+      if ($user['status'] == 2) {
+        return 'banned';
+      } else if ($user['status'] == 1) {
+        return 'pending';
+      }
+      // else if ($user['email_verified_at'] == null) {
+      //   return 'unverified';
+      // }
 
-        $user['token'] = $user->createToken('AccessToken')->plainTextToken;
-        
-        $roleInfo = $this->getRole($user);
-        $responseData = [
-            'message' => 'Welcome',
-            'token' => $user['token'],
-            'name' => $user['name'],
-            'id' => $user['id'],
-            'role' => $roleInfo['role']
-        ];
+      $user['token'] = $user->createToken('AccessToken')->plainTextToken;
 
-        return $responseData;
+      $roleInfo = $this->getRole($user);
+      $responseData = [
+        'message' => 'Welcome',
+        'token' => $user['token'],
+        'name' => $user['name'],
+        'id' => $user['id'],
+        'role' => $roleInfo['role']
+      ];
 
+      return $responseData;
     }
     return false;
   }
@@ -187,34 +179,34 @@ class AuthService
 
   public function getRole(User $user)
   {
-      $role = Role::where('id', $user->role_id)->first();
-  
-      $result = [
-          'role' => $role->role_name ?? 'Unknown'
-      ];
-    
-      if ($role && $role->role_name === 'owner') {
-          $owner = Owner::where('user_id', $user->id)->first();
-          if (!$owner) 
-            return $result;
-      
-          $category = Owner_category::where('id', $owner->owner_category_id)->first();
-          $categoryName = $category->name ?? 'Unknown category';
-      
-          if ($categoryName === 'Accommodation') {
-              $accommodation = Accommodation::where('owner_id', $owner->id)->first();
-          
-              if ($accommodation) {
-                  $type = Accommodation_type::find($accommodation->accommodation_type_id);
-                  $result['role'] = $type->name ?? 'Accommodation type not found.';
-              } else {
-                  $result['role'] = 'Accommodation record not found.';
-              }
-          } else {
-              $result['role'] = $categoryName;
-          }
+    $role = Role::where('id', $user->role_id)->first();
+
+    $result = [
+      'role' => $role->role_name ?? 'Unknown'
+    ];
+
+    if ($role && $role->role_name === 'owner') {
+      $owner = Owner::where('user_id', $user->id)->first();
+      if (!$owner)
+        return $result;
+
+      $category = Owner_category::where('id', $owner->owner_category_id)->first();
+      $categoryName = $category->name ?? 'Unknown category';
+
+      if ($categoryName === 'Accommodation') {
+        $accommodation = Accommodation::where('owner_id', $owner->id)->first();
+
+        if ($accommodation) {
+          $type = Accommodation_type::find($accommodation->accommodation_type_id);
+          $result['role'] = $type->name ?? 'Accommodation type not found.';
+        } else {
+          $result['role'] = 'Accommodation record not found.';
+        }
+      } else {
+        $result['role'] = $categoryName;
       }
-    
-      return $result;
+    }
+
+    return $result;
   }
 }
