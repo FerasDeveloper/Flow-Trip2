@@ -196,7 +196,8 @@ class UserService
         'accommodations.*',
         'accommodation_types.name as type_name',
         'owners.description as owner_description',
-        'owners.location as owner_location'
+        'owners.location as owner_location',
+        DB::raw('(SELECT reference FROM pictures WHERE owner_id = owners.id LIMIT 1) as owner_picture')
       )
       ->inRandomOrder()
       ->limit(5)
