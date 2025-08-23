@@ -125,6 +125,12 @@ class UserController extends Controller
     } catch (Exception $e) {
       return response()->json(['error' => 'An error occurred: ' . $e->getMessage()], 500);
     }
+  }
+
+  public function getBalance(){
+    return response()->json($this->paymentService->getBalance());
+  }
+
   // public function filterFlights(Request $request)
   // {
   //   $flights = $this->userservice->filterFlights($request);
@@ -134,7 +140,6 @@ class UserController extends Controller
   //     'data'   => $flights
   //   ]);
   // }
-  }
 
   public function filterFlights(UserRequest $request)
   {

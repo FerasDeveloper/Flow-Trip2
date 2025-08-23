@@ -9,6 +9,7 @@ use App\Http\Controllers\GeneralTaskController;
 use App\Http\Controllers\TourismCompanyController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehiclyController;
+use App\Http\Controllers\PaymentController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/CreateUser', [AuthController::class, 'user_Register']);
@@ -37,6 +38,7 @@ Route::post('/filterActivities',[UserController::class,'filterActivities']);
 Route::post('/ai/chat', [AiController::class, 'chat']);
 Route::post('/ai/itinerary', [AiController::class, 'itinerary']);
 Route::get('/getAllVehicles',[UserController::class,'getAllVehicles']);
+Route::get('/payments/balance',[UserController::class,'getBalance']);
 
 
 
