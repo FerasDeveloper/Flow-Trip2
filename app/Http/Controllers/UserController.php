@@ -6,6 +6,7 @@ use App\Http\Requests\UserRequest;
 use App\Services\PaymentService;
 use App\Services\UserService;
 use Exception;
+use GuzzleHttp\Psr7\Request;
 
 class UserController extends Controller
 {
@@ -127,7 +128,8 @@ class UserController extends Controller
     }
   }
 
-  public function getBalance(){
+  public function getBalance()
+  {
     return response()->json($this->paymentService->getBalance());
   }
 
@@ -209,5 +211,18 @@ class UserController extends Controller
       'status' => 'success',
       'data' => $vehicles
     ], 200);
+  }
+
+  public function book_package(UserRequest $request)
+  {
+    $result = $this->userservice->bookPackage($request->validated());
+
+    return response()->json($result, $result['success'] ? 200 : 400);
+  }
+  public function book_flight(UserRequest $request)
+  {
+    $result = $this->userservice->bookFlight($request->validated());
+
+    return response()->json($result, $result['success'] ? 200 : 400);
   }
 }

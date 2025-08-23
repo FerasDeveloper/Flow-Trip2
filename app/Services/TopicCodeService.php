@@ -34,8 +34,8 @@ namespace App\Services;
 class TopicCodeService
 {
   protected array $topics = [
-    'حقائب'   => 1,
-    'شنط'     => 1,
+    'حقائب'   => +963938246910,
+    'شنط'     => +963938246910,
     'الحسابات' => 2,
     'فاتورة'  => 2,
     'حجوزات'  => 3,

@@ -33,13 +33,14 @@ Route::get('/getActivity', [UserController::class, 'getActivity']);
 Route::get('/getRandomActivity', [UserController::class, 'getRandomActivity']);
 Route::get('/getRandomAccommodations', [UserController::class, 'getRandomAccommodations']);
 Route::post('/filterFlights', [UserController::class, 'filterFlights']);
-Route::post('/searchVehicles',[UserController::class,'searchVehicles']);
-Route::post('/filterActivities',[UserController::class,'filterActivities']);
+Route::post('/searchVehicles', [UserController::class, 'searchVehicles']);
+Route::post('/filterActivities', [UserController::class, 'filterActivities']);
 Route::post('/ai/chat', [AiController::class, 'chat']);
 Route::post('/ai/itinerary', [AiController::class, 'itinerary']);
-Route::get('/getAllVehicles',[UserController::class,'getAllVehicles']);
-Route::get('/payments/balance',[UserController::class,'getBalance']);
-
+Route::get('/getAllVehicles', [UserController::class, 'getAllVehicles']);
+Route::get('/payments/balance', [UserController::class, 'getBalance']);
+Route::post('/book_package', [UserController::class, 'book_package']);
+Route::post('/book_flight', [UserController::class, 'book_flight']);
 
 
 
@@ -136,7 +137,7 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::post('/BookAccommodation/{id}', [UserController::class, 'book_accommodation']);
 
 
-  
+
   // tourism company
   Route::prefix('tourism')->group(function () {
     Route::post('/createPackage', [TourismCompanyController::class, 'createPackage']);
@@ -155,7 +156,7 @@ Route::middleware('auth:sanctum')->group(function () {
   });
 
 
-    // Vehicly Owner
+  // Vehicly Owner
   Route::prefix('vehicleowner')->group(function () {
     Route::post('/createVehicle', [VehiclyController::class, 'createVehicly']);
     Route::post('/editVehicle/{id}', [VehiclyController::class, 'editVehicly']);
