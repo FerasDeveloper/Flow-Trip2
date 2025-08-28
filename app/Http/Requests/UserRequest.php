@@ -64,6 +64,26 @@ class UserRequest extends FormRequest
           'country_name'  => ['nullable', 'string'],
           'location'      => ['nullable', 'string'],
         ];
+      case 'book_package':
+        return [
+          'user_id'         => 'required|integer|exists:users,id',
+          'package_id'      => 'required|integer|exists:packages,id',
+          'stripeToken'     => 'required|string',
+          'amount'          => 'required|numeric|min:0.01',
+          'traveler_name'   => 'required|string|max:255',
+          'national_number' => 'required|string|max:50',
+        ];
+
+      case 'book_flight':
+        return [
+          'user_id'         => 'required|integer|exists:users,id',
+          'flight_id'       => 'required|integer|exists:flights,id',
+          'stripeToken'     => 'required|string',
+          'traveler_name'   => 'required|string|max:255',
+          'national_number' => 'required|string|max:50',
+          'seat_number'     => 'required|string|max:10'
+        ];
+
 
       default:
         return [];
@@ -106,6 +126,15 @@ class UserRequest extends FormRequest
           'country_name.string'  => 'Country name must be a string.',
           'location.string'      => 'Location must be a string.',
 
+        ];
+      case 'book_package':
+        return [
+          'user_id.required'         => 'User ID required.',
+          'package_id.required'      => 'Package ID is required.',
+          'stripeToken.required'     => 'Payment code is required.',
+          'amount.required'          => 'Amount required.',
+          'traveler_name.required'   => 'Traveler name is required.',
+          'national_number.required' => 'National ID is required.',
         ];
 
       default:

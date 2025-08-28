@@ -43,6 +43,8 @@ Route::get('/getActivity', [UserController::class, 'getActivity']);
 Route::get('/getRandomActivity', [UserController::class, 'getRandomActivity']);
 Route::get('/getRandomAccommodations', [UserController::class, 'getRandomAccommodations']);
 Route::post('/FilterAccommodation', [UserController::class, 'filter_accommodation']);
+Route::post('/book_package', [UserController::class, 'book_package']);
+Route::post('/book_flight', [UserController::class, 'book_flight']);
 
 
 

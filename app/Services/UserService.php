@@ -17,6 +17,7 @@ use App\Models\Room_picture;
 use App\Models\Tourism_company;
 use App\Models\User;
 use App\Models\User_accommodation;
+use App\Models\User_flight;
 use App\Models\User_package;
 use App\Models\User_room;
 use App\Models\Vehicle;
@@ -28,6 +29,13 @@ use Exception;
 
 class UserService
 {
+  protected $paymentService;
+
+  public function __construct(PaymentService $paymentService)
+  {
+    $this->paymentService = $paymentService;
+  }
+
   public function getRandomPackages()
   {
     $packagesQuery = Package::query();
@@ -882,5 +890,196 @@ class UserService
             : null,
         ];
       });
+  }
+
+  public function bookPackage($data)
+  {
+    $package = Package::find($data['package_id']);
+    if (!$package) {
+      return [
+        'success' => false,
+        'message' => 'Package not found'
+      ];
+    }
+
+    $existingBooking = DB::table('user_packages')
+      ->where('user_id', $data['user_id'])
+      ->where('package_id', $data['package_id'])
+      ->first();
+
+    if ($existingBooking) {
+      return [
+        'success' => false,
+        'message' => 'You have already booked this package'
+      ];
+    }
+
+    $paymentResult = $this->paymentService->processPayment([
+      'stripeToken' => $data['stripeToken'],
+      'amount'      => $data['amount']
+    ]);
+
+    if (!$paymentResult['success']) {
+      return [
+        'success' => false,
+        'message' => 'Payment failed',
+        'error'   => $paymentResult['error'] ?? null
+      ];
+    }
+
+    DB::table('user_packages')->insert([
+      'user_id'         => $data['user_id'],
+      'package_id'      => $data['package_id'],
+      'traveler_name'   => $data['traveler_name'],
+      'national_number' => $data['national_number'],
+      'created_at'      => now(),
+      'updated_at'      => now()
+    ]);
+
+    return [
+      'success'    => true,
+      'message'    => 'Booking successful',
+      'payment_id' => $paymentResult['payment_id']
+    ];
+  }
+
+
+  // public function bookFlight($data)
+  // {
+  //   $flight = Flight::find($data['flight_id']);
+  //   if (!$flight) {
+  //     return [
+  //       'success' => false,
+  //       'message' => 'Flight not found'
+  //     ];
+  //   }
+
+  //   $existingBooking = DB::table('user_flights')
+  //     ->where('user_id', $data['user_id'])
+  //     ->where('flight_id', $data['flight_id'])
+  //     ->first();
+
+  //   if ($existingBooking) {
+  //     return [
+  //       'success' => false,
+  //       'message' => 'You have already booked this flight'
+  //     ];
+  //   }
+
+  //   $paymentResult = $this->paymentService->processPayment([
+  //     'stripeToken' => $data['stripeToken'],
+  //     'amount'      => $data['price']
+  //   ]);
+
+  //   if (!$paymentResult['success']) {
+  //     return [
+  //       'success' => false,
+  //       'message' => 'Payment failed',
+  //       'error'   => $paymentResult['error'] ?? null
+  //     ];
+  //   }
+
+  //   DB::table('user_flights')->insert([
+  //     'user_id'         => $data['user_id'],
+  //     'flight_id'       => $data['flight_id'],
+  //     'traveler_name'   => $data['traveler_name'],
+  //     'national_number' => $data['national_number'],
+  //     'seat_number'     => $data['seat_number'],
+  //     'price'           => $data['price'],
+  //     'created_at'      => now(),
+  //     'updated_at'      => now()
+  //   ]);
+
+  //   return [
+  //     'success'    => true,
+  //     'message'    => 'Flight booking successful',
+  //     'payment_id' => $paymentResult['payment_id']
+  //   ];
+  // }
+
+  public function bookFlight($data)
+  {
+    $flight = Flight::with(['Plane', 'Seat'])
+      ->find($data['flight_id']);
+
+    if (!$flight) {
+      return [
+        'success' => false,
+        'message' => 'Flight not found'
+      ];
+    }
+
+    $existingBooking = User_flight::where('user_id', $data['user_id'])
+      ->where('flight_id', $data['flight_id'])
+      ->first();
+
+    if ($existingBooking) {
+      return [
+        'success' => false,
+        'message' => 'You have already booked this flight'
+      ];
+    }
+
+    if ($data['seat_number'] > $flight->Plane->seats_count) {
+      return [
+        'success' => false,
+        'message' => 'Seat number exceeds plane capacity'
+      ];
+    }
+
+    $seat = $flight->Seat()
+      ->where('seat_number', $data['seat_number'])
+      ->first();
+
+    if (!$seat) {
+      return [
+        'success' => false,
+        'message' => 'Seat not found'
+      ];
+    }
+
+    if ($seat->reserved) {
+      return [
+        'success' => false,
+        'message' => 'Seat is already reserved'
+      ];
+    }
+
+    $totalPrice = floatval($flight->price) + floatval($seat->price);
+
+    $paymentResult = $this->paymentService->processPayment([
+      'stripeToken' => $data['stripeToken'],
+      'amount'      => $totalPrice
+    ]);
+
+    if (!$paymentResult['success']) {
+      return [
+        'success' => false,
+        'message' => 'Payment failed',
+        'error'   => $paymentResult['error'] ?? null
+      ];
+    }
+
+    DB::transaction(function () use ($data, $seat, $totalPrice) {
+      User_flight::create([
+        'user_id'         => $data['user_id'],
+        'flight_id'       => $data['flight_id'],
+        'traveler_name'   => $data['traveler_name'],
+        'national_number' => $data['national_number'],
+        'seat_number'     => $data['seat_number'],
+        'price'           => $totalPrice,
+        'created_at'      => now(),
+        'updated_at'      => now()
+      ]);
+
+      $seat->update(['reserved' => true]);
+    });
+
+    return [
+      'success'    => true,
+      'message'    => 'Flight booking successful',
+      'payment_id' => $paymentResult['payment_id'],
+      'total_price' => $totalPrice
+    ];
   }
 }
