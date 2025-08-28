@@ -102,6 +102,22 @@ class AdminController extends Controller
       ], 404);
     }
 
+    if ($package->package_picture) {
+      $package->package_picture = asset('storage/' . $package->package_picture);
+    }
+
+    if ($package->package_element) {
+      foreach ($package->package_element as $element) {
+        if ($element->package_element_picture) {
+          foreach ($element->package_element_picture as $pic) {
+            if ($pic->picture_path) {
+              $pic->picture_path = asset('storage/' . $pic->picture_path);
+            }
+          }
+        }
+      }
+    }
+
     return response()->json([
       'message' => 'success',
       'data' => $package,
