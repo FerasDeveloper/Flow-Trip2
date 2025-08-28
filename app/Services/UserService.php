@@ -59,25 +59,6 @@ class UserService
       ];
     });
   }
-
-  // public function getActivity()
-  // {
-  //   return DB::table('activity_owners')
-  //     ->join('activities', 'activity_owners.activity_id', '=', 'activities.id')
-  //     ->join('owners', 'activity_owners.owner_id', '=', 'owners.id')
-  //     ->join('users', 'owners.user_id', '=', 'users.id')
-  //     ->join('countries', 'owners.country_id', '=', 'countries.id')
-  //     ->select(
-  //       'activities.id as id',
-  //       'activities.name as activity_name',
-  //       'activity_owners.owner_name',
-  //       'owners.description',
-  //       'owners.location',
-  //       'users.phone_number',
-  //       'countries.name as country_name'
-  //     )
-  //     ->get();
-  // }
   public function getActivity()
   {
     $records = DB::table('activity_owners')
@@ -114,38 +95,6 @@ class UserService
       ];
     });
   }
-
-  // public function getRandomActivity()
-  // {
-  //   $activityOwnersQuery = Activity_owner::query();
-  //   if ($activityOwnersQuery->count() <= 5) {
-  //     $records = $activityOwnersQuery->get();
-  //   } else {
-  //     $records = $activityOwnersQuery->inRandomOrder()->limit(5)->get();
-  //   }
-  //   return $records->map(function ($record) {
-  //     $activity = Activity::find($record->activity_id);
-  //     $ownerData = Owner::join('users', 'owners.user_id', '=', 'users.id')
-  //       ->join('countries', 'owners.country_id', '=', 'countries.id')
-  //       ->where('owners.id', $record->owner_id)
-  //       ->select(
-  //         'owners.description',
-  //         'owners.location',
-  //         'users.phone_number',
-  //         'countries.name as country_name'
-  //       )
-  //       ->first();
-  //     return [
-  //       'id'            => $activity->id ?? null,
-  //       'activity_name' => $activity->name ?? null,
-  //       'owner_name'    => $record->owner_name,
-  //       'description'   => $ownerData->description ?? null,
-  //       'location'      => $ownerData->location ?? null,
-  //       'phone_number'  => $ownerData->phone_number ?? null,
-  //       'country_name'  => $ownerData->country_name ?? null,
-  //     ];
-  //   });
-  // }
 
   public function getRandomActivity()
   {
@@ -516,73 +465,6 @@ class UserService
     ];
   }
 
-  // public function filterFlights($request)
-  // {
-  //   $start          = $request->starting_point_location;
-  //   $end            = $request->landing_point_location;
-  //   $isRoundTrip    = $request->is_round_trip;
-  //   $passengerCount = (int) $request->passenger_count;
-
-  //   if (!$isRoundTrip) {
-  //     $date = $request->date;
-
-  //     $flights = Flight::with(['Air_line', 'Plane', 'Seat'])
-  //       ->where('starting_point_location', $start)
-  //       ->where('landing_point_location', $end)
-  //       ->whereDate('date', $date)
-  //       ->get();
-
-  //     $flights = $flights->filter(function ($flight) use ($passengerCount) {
-  //       if (!$flight->Plane) return false;
-
-  //       $available = $flight->Plane->seats_count - DB::table('user_flights')->where('flight_id', $flight->id)->count();
-  //       return $available >= $passengerCount;
-  //     })->values();
-
-  //     return $flights->toArray();
-  //   }
-
-  //   $departureDate = $request->departure_date;
-  //   $returnDate    = $request->return_date;
-
-  //   $goFlights = Flight::with(['Air_line', 'Plane', 'Seat'])
-  //     ->where('starting_point_location', $start)
-  //     ->where('landing_point_location', $end)
-  //     ->whereDate('date', $departureDate)
-  //     ->get();
-
-  //   $returnFlights = Flight::with(['Air_line', 'Plane', 'Seat'])
-  //     ->where('starting_point_location', $end)
-  //     ->where('landing_point_location', $start)
-  //     ->whereDate('date', $returnDate)
-  //     ->get();
-
-  //   $goFlights = $goFlights->filter(function ($flight) use ($passengerCount) {
-  //     if (!$flight->Plane) return false;
-  //     $available = $flight->Plane->seats_count - DB::table('user_flights')->where('flight_id', $flight->id)->count();
-  //     return $available >= $passengerCount;
-  //   })->values();
-
-  //   $returnFlights = $returnFlights->filter(function ($flight) use ($passengerCount) {
-  //     if (!$flight->Plane) return false;
-  //     $available = $flight->Plane->seats_count - DB::table('user_flights')->where('flight_id', $flight->id)->count();
-  //     return $available >= $passengerCount;
-  //   })->values();
-
-  //   if ($goFlights->isEmpty() || $returnFlights->isEmpty()) {
-  //     return [];
-  //   }
-
-  //   $roundTrips = [];
-  //   foreach ($goFlights as $go) {
-  //     foreach ($returnFlights as $ret) {
-  //       $roundTrips[] = ['go' => $go, 'return' => $ret];
-  //     }
-  //   }
-
-  //   return $roundTrips;
-  // }
-
   public function filterFlights($request)
   {
     $start = $request->starting_point_location;
@@ -747,47 +629,6 @@ class UserService
       ];
     });
   }
-
-  // public function filterActivities(array $filters)
-  // {
-  //   $query = Activity_owner::query()
-  //     ->join('activities', 'activity_owners.activity_id', '=', 'activities.id')
-  //     ->join('owners', 'activity_owners.owner_id', '=', 'owners.id')
-  //     ->join('users', 'owners.user_id', '=', 'users.id')
-  //     ->join('countries', 'owners.country_id', '=', 'countries.id')
-  //     ->select(
-  //       'activity_owners.owner_id',
-  //       'owners.description',
-  //       'owners.location',
-  //       'activities.name as activity_name',
-  //       'countries.name as country_name',
-  //       'users.email',
-  //       'users.phone_number'
-  //     );
-
-  //   if (!empty($filters['activity_name'])) {
-  //     $query->where('activities.name', 'like', "%{$filters['activity_name']}%");
-  //   }
-
-  //   if (!empty($filters['country_name'])) {
-  //     $query->where('countries.name', 'like', "%{$filters['country_name']}%");
-  //   }
-
-  //   if (!empty($filters['location'])) {
-  //     $query->where('owners.location', 'like', "%{$filters['location']}%");
-  //   }
-
-  //   $results = $query->get();
-
-  //   if ($results->isEmpty()) {
-  //     return [
-  //       'message' => 'Unfortunately, there are no activities at the moment.'
-  //     ];
-  //   }
-
-  //   return $results;
-  // }
-
   public function filterActivities(array $filters)
   {
     $query = Activity_owner::query()
@@ -860,7 +701,7 @@ class UserService
       ->join('owners', 'vehicle_owners.owner_id', '=', 'owners.id')
       ->join('users', 'owners.user_id', '=', 'users.id')
       ->with(['car_picture' => function ($query) {
-        $query->select('vehicle_id', 'picture_path')->limit(1);  // أول صورة فقط
+        $query->select('vehicle_id', 'picture_path')->limit(1);
       }])
       ->get()
       ->map(function ($vehicle) {
@@ -880,9 +721,10 @@ class UserService
         ];
       });
   }
-
   public function bookPackage($data)
   {
+    $user = Auth::user();
+
     $package = Package::find($data['package_id']);
     if (!$package) {
       return [
@@ -892,7 +734,7 @@ class UserService
     }
 
     $existingBooking = DB::table('user_packages')
-      ->where('user_id', $data['user_id'])
+      ->where('user_id', $user->id)
       ->where('package_id', $data['package_id'])
       ->first();
 
@@ -917,7 +759,7 @@ class UserService
     }
 
     DB::table('user_packages')->insert([
-      'user_id'         => $data['user_id'],
+      'user_id'         => $user->id,
       'package_id'      => $data['package_id'],
       'traveler_name'   => $data['traveler_name'],
       'national_number' => $data['national_number'],
@@ -932,62 +774,10 @@ class UserService
     ];
   }
 
-
-  // public function bookFlight($data)
-  // {
-  //   $flight = Flight::find($data['flight_id']);
-  //   if (!$flight) {
-  //     return [
-  //       'success' => false,
-  //       'message' => 'Flight not found'
-  //     ];
-  //   }
-
-  //   $existingBooking = DB::table('user_flights')
-  //     ->where('user_id', $data['user_id'])
-  //     ->where('flight_id', $data['flight_id'])
-  //     ->first();
-
-  //   if ($existingBooking) {
-  //     return [
-  //       'success' => false,
-  //       'message' => 'You have already booked this flight'
-  //     ];
-  //   }
-
-  //   $paymentResult = $this->paymentService->processPayment([
-  //     'stripeToken' => $data['stripeToken'],
-  //     'amount'      => $data['price']
-  //   ]);
-
-  //   if (!$paymentResult['success']) {
-  //     return [
-  //       'success' => false,
-  //       'message' => 'Payment failed',
-  //       'error'   => $paymentResult['error'] ?? null
-  //     ];
-  //   }
-
-  //   DB::table('user_flights')->insert([
-  //     'user_id'         => $data['user_id'],
-  //     'flight_id'       => $data['flight_id'],
-  //     'traveler_name'   => $data['traveler_name'],
-  //     'national_number' => $data['national_number'],
-  //     'seat_number'     => $data['seat_number'],
-  //     'price'           => $data['price'],
-  //     'created_at'      => now(),
-  //     'updated_at'      => now()
-  //   ]);
-
-  //   return [
-  //     'success'    => true,
-  //     'message'    => 'Flight booking successful',
-  //     'payment_id' => $paymentResult['payment_id']
-  //   ];
-  // }
-
   public function bookFlight($data)
   {
+    $user = Auth::user();
+
     $flight = Flight::with(['Plane', 'Seat'])
       ->find($data['flight_id']);
 
@@ -998,7 +788,7 @@ class UserService
       ];
     }
 
-    $existingBooking = User_flight::where('user_id', $data['user_id'])
+    $existingBooking = User_flight::where('user_id', $user->id)
       ->where('flight_id', $data['flight_id'])
       ->first();
 
@@ -1034,11 +824,11 @@ class UserService
       ];
     }
 
-    $totalPrice = floatval($flight->price) + floatval($seat->price);
+    $seatPrice = floatval($seat->price);
 
     $paymentResult = $this->paymentService->processPayment([
       'stripeToken' => $data['stripeToken'],
-      'amount'      => $totalPrice
+      'amount'      => $seatPrice
     ]);
 
     if (!$paymentResult['success']) {
@@ -1049,14 +839,14 @@ class UserService
       ];
     }
 
-    DB::transaction(function () use ($data, $seat, $totalPrice) {
+    DB::transaction(function () use ($user, $data, $seat, $seatPrice) {
       User_flight::create([
-        'user_id'         => $data['user_id'],
+        'user_id'         => $user->id,
         'flight_id'       => $data['flight_id'],
         'traveler_name'   => $data['traveler_name'],
         'national_number' => $data['national_number'],
         'seat_number'     => $data['seat_number'],
-        'price'           => $totalPrice,
+        'price'           => $seatPrice,
         'created_at'      => now(),
         'updated_at'      => now()
       ]);
@@ -1065,10 +855,10 @@ class UserService
     });
 
     return [
-      'success'    => true,
-      'message'    => 'Flight booking successful',
-      'payment_id' => $paymentResult['payment_id'],
-      'total_price' => $totalPrice
+      'success'     => true,
+      'message'     => 'Flight booking successful',
+      'payment_id'  => $paymentResult['payment_id'],
+      'total_price' => $seatPrice
     ];
   }
 }
