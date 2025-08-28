@@ -11,8 +11,9 @@ use App\Models\Owner;
 use App\Models\Package;
 use App\Models\Package_element;
 use App\Models\Package_element_picture;
-use App\Models\Room;
 use App\Models\Picture;
+use App\Models\Room;
+use App\Models\Room_picture;
 use App\Models\Tourism_company;
 use App\Models\User;
 use App\Models\User_accommodation;
@@ -20,11 +21,11 @@ use App\Models\User_flight;
 use App\Models\User_package;
 use App\Models\User_room;
 use App\Models\Vehicle;
-use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
+use Exception;
 
 class UserService
 {
@@ -83,14 +84,14 @@ class UserService
         ->value('reference');
 
       return [
-        'id'            => $record->id,
+        'id' => $record->id,
         'activity_name' => $record->activity_name,
-        'owner_name'    => $record->owner_name,
-        'description'   => $record->description,
-        'location'      => $record->location,
-        'phone_number'  => $record->phone_number,
-        'country_name'  => $record->country_name,
-        'picture'       => $picture ? url($picture) : null,
+        'owner_name' => $record->owner_name,
+        'description' => $record->description,
+        'location' => $record->location,
+        'phone_number' => $record->phone_number,
+        'country_name' => $record->country_name,
+        'picture' => $picture ? url($picture) : null,
       ];
     });
   }
@@ -133,12 +134,12 @@ class UserService
         'location' => $ownerData->location ?? null,
         'phone_number' => $ownerData->phone_number ?? null,
         'country_name' => $ownerData->country_name ?? null,
-        'owner_name'    => $record->owner_name,
-        'description'   => $ownerData->description ?? null,
-        'location'      => $ownerData->location ?? null,
-        'phone_number'  => $ownerData->phone_number ?? null,
-        'country_name'  => $ownerData->country_name ?? null,
-        'picture'       => $picture ? url($picture) : null,
+        'owner_name' => $record->owner_name,
+        'description' => $ownerData->description ?? null,
+        'location' => $ownerData->location ?? null,
+        'phone_number' => $ownerData->phone_number ?? null,
+        'country_name' => $ownerData->country_name ?? null,
+        'picture' => $picture ? url($picture) : null,
       ];
     });
   }
@@ -162,12 +163,6 @@ class UserService
 
   public function filter_accommodation($request)
   {
-    $user = Auth::user();
-    $user0 = User::query()->where('id', $user->id)->first();
-    if ($user0->role_id != 3) {
-      return ['message' => 'You are not allowed to perform this action'];
-    }
-
     $type_id = $request['type_id'];
     $name = $request['name'];
     $destination = $request['destination'];
@@ -208,8 +203,10 @@ class UserService
         $rooms = Room::query()->where('accommodation_id', $hotel->id)->get();
 
         $availableRooms = $rooms->filter(function ($room) use ($start_date, $end_date, $people) {
-          if ($room->people_count < $people) {
-            return false;
+          if ($people != '') {
+            if ($room->people_count < $people) {
+              return false;
+            }
           }
 
           $overlappingBookings = User_room::query()
@@ -223,6 +220,16 @@ class UserService
           return !$overlappingBookings;
         });
 
+        $availableRooms = $availableRooms->map(function ($room) {
+          $firstPicture = Room_picture::query()
+            ->where('room_id', $room->id)
+            ->orderBy('id', 'asc')
+            ->value('room_picture');
+          $room['picture'] = $firstPicture ? asset($firstPicture) : '';
+          return $room;
+        });
+
+        $hotel['location'] = Owner::query()->where('id', $hotel->owner_id)->value('location');
         $hotel['rooms'] = $availableRooms->values();
         return $hotel;
       });
@@ -241,6 +248,18 @@ class UserService
           })
           ->exists();
         return !$overlappingBookings;
+      });
+
+      $availableOthers = $availableOthers->map(function ($other) {
+        $other['location'] = Owner::query()->where('id', $other->owner_id)->pluck('location')[0];
+
+        $firstPicture = Picture::query()
+          ->where('owner_id', $other->owner_id)
+          ->orderBy('id', 'asc')
+          ->value('reference');
+        $other['picture'] = $firstPicture ? asset($firstPicture) : '';
+
+        return $other;
       });
 
       return [
@@ -290,6 +309,16 @@ class UserService
           return !$overlappingBookings;
         });
 
+        $availableRooms = $availableRooms->map(function ($room) {
+          $firstPicture = Room_picture::query()
+            ->where('room_id', $room->id)
+            ->orderBy('id', 'asc')
+            ->value('room_picture');
+          $room['picture'] = $firstPicture ? asset($firstPicture) : '';
+          return $room;
+        });
+
+        $accommodation['location'] = Owner::query()->where('id', $accommodation->owner_id)->value('location');
         $accommodation['rooms'] = $availableRooms->values();
         return $accommodation;
       });
@@ -310,6 +339,19 @@ class UserService
           })
           ->exists();
         return !$overlappingBookings;
+      });
+
+      $availableAccommodations = $availableAccommodations->map(function ($availableAccommodation) {
+        $availableAccommodation['location'] = Owner::query()->where('id', $availableAccommodation->owner_id)->pluck('location')[0];
+
+        $owner = Owner::query()->where('id', $availableAccommodation->owner_id)->first();
+        $firstPicture = Picture::query()
+          ->where('owner_id', $owner->id)
+          ->orderBy('id', 'asc')
+          ->value('reference');
+        $availableAccommodation['picture'] = $firstPicture ? asset($firstPicture) : '';
+
+        return $availableAccommodation;
       });
 
       return $availableAccommodations->values();
@@ -436,11 +478,11 @@ class UserService
 
   public function filterFlights($request)
   {
-    $start          = $request->starting_point_location;
-    $end            = $request->landing_point_location;
-    $isRoundTrip    = $request->is_round_trip;
+    $start = $request->starting_point_location;
+    $end = $request->landing_point_location;
+    $isRoundTrip = $request->is_round_trip;
     $passengerCount = (int) $request->passenger_count;
-    $sortBy         = $request->sort_by;
+    $sortBy = $request->sort_by;
 
     if (!$isRoundTrip) {
       $date = $request->date;
@@ -452,7 +494,8 @@ class UserService
         ->get();
 
       $flights = $flights->filter(function ($flight) use ($passengerCount) {
-        if (!$flight->Plane) return false;
+        if (!$flight->Plane)
+          return false;
 
         $available = $flight->Plane->seats_count
           - DB::table('user_flights')->where('flight_id', $flight->id)->count();
@@ -466,7 +509,7 @@ class UserService
     }
 
     $departureDate = $request->departure_date;
-    $returnDate    = $request->return_date;
+    $returnDate = $request->return_date;
 
     $goFlights = Flight::with(['Air_line', 'Plane', 'Seat'])
       ->where('starting_point_location', $start)
@@ -481,14 +524,16 @@ class UserService
       ->get();
 
     $goFlights = $goFlights->filter(function ($flight) use ($passengerCount) {
-      if (!$flight->Plane) return false;
+      if (!$flight->Plane)
+        return false;
       $available = $flight->Plane->seats_count
         - DB::table('user_flights')->where('flight_id', $flight->id)->count();
       return $available >= $passengerCount;
     })->values();
 
     $returnFlights = $returnFlights->filter(function ($flight) use ($passengerCount) {
-      if (!$flight->Plane) return false;
+      if (!$flight->Plane)
+        return false;
       $available = $flight->Plane->seats_count
         - DB::table('user_flights')->where('flight_id', $flight->id)->count();
       return $available >= $passengerCount;
@@ -502,7 +547,7 @@ class UserService
     foreach ($goFlights as $go) {
       foreach ($returnFlights as $ret) {
         $roundTrips[] = [
-          'go'     => $go,
+          'go' => $go,
           'return' => $ret
         ];
       }
@@ -575,27 +620,26 @@ class UserService
 
     return $query->get()->map(function ($vehicle) {
       return [
-        'id'              => $vehicle->id,
+        'id' => $vehicle->id,
         'car_discription' => $vehicle->car_discription,
-        'people_count'    => $vehicle->people_count,
-        'name'            => $vehicle->name,
-        'car_type_name'   => $vehicle->car_type?->name,
-        'vehicle_owner'   => [
-          'id'         => $vehicle->vehicle_owner->id ?? null,
+        'people_count' => $vehicle->people_count,
+        'name' => $vehicle->name,
+        'car_type_name' => $vehicle->car_type?->name,
+        'vehicle_owner' => [
+          'id' => $vehicle->vehicle_owner->id ?? null,
           'owner_name' => $vehicle->vehicle_owner->owner_name ?? null,
-          'location'   => $vehicle->vehicle_owner->owner->location ?? null,
-          'user'       => [
-            'email'        => $vehicle->vehicle_owner->owner->user->email ?? null,
+          'location' => $vehicle->vehicle_owner->owner->location ?? null,
+          'user' => [
+            'email' => $vehicle->vehicle_owner->owner->user->email ?? null,
             'phone_number' => $vehicle->vehicle_owner->owner->user->phone_number ?? null,
           ],
-          'country'    => [
+          'country' => [
             'name' => $vehicle->vehicle_owner->owner->country->name ?? null,
           ],
         ],
       ];
     });
   }
-
   public function filterActivities(array $filters)
   {
     $query = Activity_owner::query()
@@ -640,12 +684,12 @@ class UserService
 
       return [
         'activity_name' => $record->activity_name,
-        'description'   => $record->description,
-        'location'      => $record->location,
-        'country_name'  => $record->country_name,
-        'email'         => $record->email,
-        'phone_number'  => $record->phone_number,
-        'picture'       => $picture ? url($picture) : null,
+        'description' => $record->description,
+        'location' => $record->location,
+        'country_name' => $record->country_name,
+        'email' => $record->email,
+        'phone_number' => $record->phone_number,
+        'picture' => $picture ? url($picture) : null,
       ];
     });
   }
@@ -668,21 +712,21 @@ class UserService
       ->join('owners', 'vehicle_owners.owner_id', '=', 'owners.id')
       ->join('users', 'owners.user_id', '=', 'users.id')
       ->with(['car_picture' => function ($query) {
-        $query->select('vehicle_id', 'picture_path')->limit(1); // أول صورة فقط
+        $query->select('vehicle_id', 'picture_path')->limit(1);
       }])
       ->get()
       ->map(function ($vehicle) {
         return [
-          'id'            => $vehicle->id,
-          'name'          => $vehicle->vehicle_name,
-          'description'   => $vehicle->car_discription,
-          'people_count'  => $vehicle->people_count,
-          'car_type'      => $vehicle->car_type,
-          'owner_name'    => $vehicle->owner_name,
-          'location'      => $vehicle->location,
-          'email'         => $vehicle->email,
-          'phone_number'  => $vehicle->phone_number,
-          'picture'       => $vehicle->car_picture->first()
+          'id' => $vehicle->id,
+          'name' => $vehicle->vehicle_name,
+          'description' => $vehicle->car_discription,
+          'people_count' => $vehicle->people_count,
+          'car_type' => $vehicle->car_type,
+          'owner_name' => $vehicle->owner_name,
+          'location' => $vehicle->location,
+          'email' => $vehicle->email,
+          'phone_number' => $vehicle->phone_number,
+          'picture' => $vehicle->car_picture->first()
             ? asset('storage/' . $vehicle->car_picture->first()->picture_path)
             : null,
         ];
