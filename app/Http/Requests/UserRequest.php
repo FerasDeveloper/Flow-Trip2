@@ -66,7 +66,6 @@ class UserRequest extends FormRequest
         ];
       case 'book_package':
         return [
-          'user_id'         => 'required|integer|exists:users,id',
           'package_id'      => 'required|integer|exists:packages,id',
           'stripeToken'     => 'required|string',
           'amount'          => 'required|numeric|min:0.01',
@@ -76,7 +75,6 @@ class UserRequest extends FormRequest
 
       case 'book_flight':
         return [
-          'user_id'         => 'required|integer|exists:users,id',
           'flight_id'       => 'required|integer|exists:flights,id',
           'stripeToken'     => 'required|string',
           'traveler_name'   => 'required|string|max:255',

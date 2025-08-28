@@ -39,8 +39,7 @@ Route::post('/ai/chat', [AiController::class, 'chat']);
 Route::post('/ai/itinerary', [AiController::class, 'itinerary']);
 Route::get('/getAllVehicles', [UserController::class, 'getAllVehicles']);
 Route::get('/payments/balance', [UserController::class, 'getBalance']);
-Route::post('/book_package', [UserController::class, 'book_package']);
-Route::post('/book_flight', [UserController::class, 'book_flight']);
+
 
 
 
@@ -135,7 +134,8 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::post('/FilterAccommodation', [UserController::class, 'filter_accommodation']);
   Route::post('/BookRoom/{id}', [UserController::class, 'book_room']);
   Route::post('/BookAccommodation/{id}', [UserController::class, 'book_accommodation']);
-
+  Route::post('/book_package', [UserController::class, 'book_package']);
+  Route::post('/book_flight', [UserController::class, 'book_flight']);
 
 
   // tourism company
