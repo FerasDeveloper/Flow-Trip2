@@ -2,9 +2,11 @@
 
 namespace App\Services;
 
+use App\Events\NotificationSent;
 use App\Models\Accommodation;
 use App\Models\Accommodation_type;
 use App\Models\Auth_request;
+use App\Models\Notification;
 use App\Models\Owner;
 use App\Models\Owner_category;
 use App\Models\Role;
@@ -51,9 +53,11 @@ class AuthService
     });
 
     if ($user['role_id'] == 3) {
+      $this->send_notification($user->id);
       $user['token'] = $user->createToken('AccessToken')->plainTextToken;
       return ['token' => $user['token']];
-    } else if ($user['role_id'] == 4) {
+    }
+     else if ($user['role_id'] == 4) {
       $user->update(['status' => 1]);
     }
 
@@ -209,4 +213,18 @@ class AuthService
 
     return $result;
   }
+
+
+  public function send_notification(int $user_ID)
+  {
+      $message2 = "Welcome to FlowTrip! We are excited to have you onboard. With FlowTrip you can book your flights, explore exclusive travel packages, rent cars, enjoy activities, and find the perfect hotels or other accomodations. Start your journey today!";
+
+      $notification = Notification::query()->create([
+        'user_id' => $user_ID,
+        'message' => $message2,
+      ]);  
+
+      event(new NotificationSent($notification));
+  }
+
 }

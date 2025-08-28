@@ -6,6 +6,7 @@ use App\Http\Controllers\AiController;
 use App\Http\Controllers\AirLineController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\GeneralTaskController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TourismCompanyController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\VehiclyController;
@@ -135,7 +136,8 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::post('/BookRoom/{id}', [UserController::class, 'book_room']);
   Route::post('/BookAccommodation/{id}', [UserController::class, 'book_accommodation']);
 
-
+  // Notifications
+  Route::get('/GetAllNotifications', [NotificationController::class, 'get_all_notifications']);
 
   // tourism company
   Route::prefix('tourism')->group(function () {
@@ -166,4 +168,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/getAllViclyForuser/{id}', [VehiclyController::class, 'getAllViclyForuser']);
     Route::get('/getVehicleById/{id}', [VehiclyController::class, 'getVehicleById']);
   });
+  
 });

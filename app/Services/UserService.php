@@ -448,10 +448,6 @@ class UserService
     $user = Auth::user();
     $room = Room::query()->where('id', $id)->first();
 
-    if (!$room) {
-      return ['success' => false, 'message' => 'Room not found'];
-    }
-
     $booking = User_room::create([
       'user_id' => $user->id,
       'room_id' => $id,
@@ -471,13 +467,6 @@ class UserService
   public function check_accommodation_availability($accommodation_id, $start_date, $end_date)
   {
     $accommodation = Accommodation::query()->where('id', $accommodation_id)->first();
-
-    if (!$accommodation) {
-      return [
-        'available' => false,
-        'message' => 'Accommodation not found'
-      ];
-    }
 
     $overlappingBookings = User_accommodation::query()
       ->where('accommodation_id', $accommodation_id)
