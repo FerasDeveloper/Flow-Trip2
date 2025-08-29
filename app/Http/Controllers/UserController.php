@@ -76,9 +76,7 @@ class UserController extends Controller
       }
 
       $payment = $this->paymentService->processPayment($validatedData);
-      return response()->json([
-        $payment
-      ]);
+      
       if ($payment['success'] == true) {
         unset($validatedData['stripeToken'], $validatedData['amount']);
 

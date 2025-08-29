@@ -91,7 +91,7 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::post('/EditPlane/{plane_id}', [AirLineController::class, 'edit_plane']);
   Route::get('/GetAllPlanes', [AirLineController::class, 'get_all_planes']);
   Route::get('/GetSinglePlane/{plane_id}', [AirLineController::class, 'get_single_plane']);
-  Route::get('/DeletePlane/{plane_id}', [AirLineController::class, 'delete_plane']);
+  Route::delete('/DeletePlane/{plane_id}', [AirLineController::class, 'delete_plane']);
 
   //2. flights
   Route::post('/AddFlight', [AirLineController::class, 'add_flight']);
@@ -99,7 +99,7 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::post('/EditSeats', [AirLineController::class, 'edit_seats']);
   Route::get('/GetFlightDetails/{flight_id}', [AirLineController::class, 'get_flight_details']);
   Route::get('/GetAllFlights', [AirLineController::class, 'get_all_flights']);
-  Route::get('/DeleteFlight/{flight_id}', [AirLineController::class, 'delete_flight']);
+  Route::delete('/DeleteFlight/{flight_id}', [AirLineController::class, 'delete_flight']);
 
   //3. reservations
   Route::get('/GetFlightReservations/{flight_id}', [AirLineController::class, 'get_flight_reservations']);

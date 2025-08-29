@@ -406,6 +406,8 @@ class UserService
       'end_date' => $request['end_date'],
       // 'payment_id' => $request['payment_id'],
     ]);
+    $message = "The room number {$room->room_number} has been successfully reserved from {$booking->start_date} to {$booking->end_date}. Enjoy your stay!";
+    app(\App\Services\NotificationService::class)->send_notification($user->id, $message);
 
     return [
       'message' => 'Room booked successfully',
@@ -459,6 +461,9 @@ class UserService
       // 'payment_id' => $request['payment_id'],
     ]);
 
+    $message = "The selected accommodation has been successfully reserved from {$booking->start_date} to {$booking->end_date}. Enjoy your stay!";
+    app(\App\Services\NotificationService::class)->send_notification($user->id, $message);
+    
     return [
       'message' => 'Accommodation booked successfully',
       'booking_details' => $booking
@@ -766,6 +771,8 @@ class UserService
       'created_at'      => now(),
       'updated_at'      => now()
     ]);
+    $message = "The selected package has been successfully reserved. Enjoy your journy!";
+    app(\App\Services\NotificationService::class)->send_notification($user->id, $message);
 
     return [
       'success'    => true,
@@ -853,6 +860,9 @@ class UserService
 
       $seat->update(['reserved' => true]);
     });
+
+    $message = "The flight {$flight->flight_number} has been successfully reserved in {$flight->date}. Enjoy your flight!";
+    app(\App\Services\NotificationService::class)->send_notification($user->id, $message);
 
     return [
       'success'     => true,

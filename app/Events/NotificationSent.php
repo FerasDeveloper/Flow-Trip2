@@ -34,10 +34,16 @@ class NotificationSent implements ShouldBroadcastNow
         return 'notification.sent';
     }
 
-    // public function broadcastWith()
-    // {
-    //     echo "Broadcasting NotificationSent for {$this->notification->user_id}: {$this->notification->message}\n";
-    //     Log::info("Broadcasting NotificationSent for {$this->notification->user_id}: {$this->notification->message}");
-    // }
+    public function broadcastWith()
+    {
+        // echo "NotificationSent for {$this->notification->user_id}: {$this->notification->message}\n";
+        Log::info("User {$this->notification->user_id} Recieved: {$this->notification->message}");
+        return [
+            'id' => $this->notification->id,
+            'message' => $this->notification->message,
+            'user_id' => $this->notification->user_id,
+        ];
+        
+    }
 
 }

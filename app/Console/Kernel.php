@@ -13,7 +13,7 @@ class Kernel extends ConsoleKernel
         $schedule->call(function () {
             $notificationService = app()->make(\App\Services\NotificationService::class);
             $notificationService->send_flight_reminders();
-        })->timezone('Asia/Damascus')->dailyAt('22:21');
+        })->timezone('Asia/Damascus')->dailyAt('00:58');
     }
 
     
