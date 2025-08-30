@@ -44,7 +44,8 @@ Route::get('/getActivity', [UserController::class, 'getActivity']);
 Route::get('/getRandomActivity', [UserController::class, 'getRandomActivity']);
 Route::get('/getRandomAccommodations', [UserController::class, 'getRandomAccommodations']);
 Route::post('/FilterAccommodation', [UserController::class, 'filter_accommodation']);
-
+Route::get('/AccommodationDetails/{id}', [UserController::class, 'accommodation_details']);
+Route::get('/RoomDetails/{id}', [UserController::class, 'room_details']);
 
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -137,7 +138,7 @@ Route::middleware('auth:sanctum')->group(function () {
   // Notifications
   Route::get('/GetAllNotifications', [NotificationController::class, 'get_all_notifications']);
 
-  
+
   Route::post('/book_package', [UserController::class, 'book_package']);
   Route::post('/book_flight', [UserController::class, 'book_flight']);
 
@@ -171,5 +172,4 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/getAllViclyForuser/{id}', [VehiclyController::class, 'getAllViclyForuser']);
     Route::get('/getVehicleById/{id}', [VehiclyController::class, 'getVehicleById']);
   });
-  
 });

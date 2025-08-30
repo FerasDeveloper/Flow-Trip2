@@ -8,12 +8,14 @@ use App\Models\Activity;
 use App\Models\Activity_owner;
 use App\Models\Flight;
 use App\Models\Owner;
+use App\Models\Owner_service;
 use App\Models\Package;
 use App\Models\Package_element;
 use App\Models\Package_element_picture;
 use App\Models\Picture;
 use App\Models\Room;
 use App\Models\Room_picture;
+use App\Models\Service;
 use App\Models\Tourism_company;
 use App\Models\User;
 use App\Models\User_accommodation;
@@ -358,6 +360,44 @@ class UserService
     }
   }
 
+  public function accommodation_details($id)
+  {
+    $accommodation = Accommodation::query()->find($id);
+    $owner = Owner::query()->find($accommodation->owner_id);
+    $user = User::query()->find($owner->user_id);
+    $servicess = Owner_service::query()->where('owner_id', $owner->id)->get();
+    $services = [];
+    foreach ($servicess as $service) {
+      $services[] = Service::query()->where('id', $service->service_id)->first();
+    }
+    $accommodation['services'] = $services;
+    $accommodation['pictures'] = Picture::query()->where('owner_id', $owner->id)->get();
+    $accommodation['location'] = $owner->location;
+    $accommodation['email'] = $user->email;
+    $accommodation['phone'] = $user->phone_number;
+    return $accommodation;
+  }
+
+  public function room_details($id)
+  {
+    $room = Room::query()->find($id);
+    $accommodation = Accommodation::query()->find($room->accommodation_id);
+    $owner = Owner::query()->find($accommodation->owner_id);
+    $user = User::query()->find($owner->user_id);
+    $servicess = Owner_service::query()->where('owner_id', $owner->id)->get();
+    $services = [];
+    foreach ($servicess as $service) {
+      $services[] = Service::query()->where('id', $service->service_id)->first();
+    }
+    $room['services'] = $services;
+    $room['pictures'] = Room_picture::query()->where('room_id', $id)->get();
+    $room['hotel_name'] = $accommodation->accommodation_name;
+    $room['location'] = $owner->location;
+    $room['email'] = $user->email;
+    $room['phone'] = $user->phone_number;
+    return $room;
+  }
+
   public function check_room_availability($room_id, $start_date, $end_date)
   {
     $room = Room::query()->where('id', $room_id)->first();
@@ -463,7 +503,7 @@ class UserService
 
     $message = "The selected accommodation has been successfully reserved from {$booking->start_date} to {$booking->end_date}. Enjoy your stay!";
     app(\App\Services\NotificationService::class)->send_notification($user->id, $message);
-    
+
     return [
       'message' => 'Accommodation booked successfully',
       'booking_details' => $booking
