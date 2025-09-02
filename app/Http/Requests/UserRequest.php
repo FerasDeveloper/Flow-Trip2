@@ -68,18 +68,22 @@ class UserRequest extends FormRequest
         return [
           'package_id'      => 'required|integer|exists:packages,id',
           'stripeToken'     => 'required|string',
-          'amount'          => 'required|numeric|min:0.01',
           'traveler_name'   => 'required|string|max:255',
           'national_number' => 'required|string|max:50',
         ];
 
       case 'book_flight':
         return [
-          'flight_id'       => 'required|integer|exists:flights,id',
-          'stripeToken'     => 'required|string',
-          'traveler_name'   => 'required|string|max:255',
-          'national_number' => 'required|string|max:50',
-          'seat_number'     => 'required|string|max:10'
+          'flight_id'          => 'required|integer|exists:flights,id',
+          'return_flight_id'   => 'nullable|integer|exists:flights,id', // إذا الإياب اختياري
+          'stripeToken'        => 'required|string',
+
+          'passengers' => 'required|array|min:1',
+
+          'passengers.*.traveler_name'        => 'required|string|max:255',
+          'passengers.*.national_number'      => 'required|string|max:50',
+          'passengers.*.seat_number_outbound' => 'required|integer|min:1',
+          'passengers.*.seat_number_return'   => 'required_with:return_flight_id|integer|min:1',
         ];
 
 

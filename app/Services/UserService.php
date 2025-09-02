@@ -463,7 +463,7 @@ class UserService
 
     $message = "The selected accommodation has been successfully reserved from {$booking->start_date} to {$booking->end_date}. Enjoy your stay!";
     app(\App\Services\NotificationService::class)->send_notification($user->id, $message);
-    
+
     return [
       'message' => 'Accommodation booked successfully',
       'booking_details' => $booking
@@ -726,6 +726,61 @@ class UserService
         ];
       });
   }
+  // public function bookPackage($data)
+  // {
+  //   $user = Auth::user();
+
+  //   $package = Package::find($data['package_id']);
+  //   if (!$package) {
+  //     return [
+  //       'success' => false,
+  //       'message' => 'Package not found'
+  //     ];
+  //   }
+
+  //   $existingBooking = DB::table('user_packages')
+  //     ->where('user_id', $user->id)
+  //     ->where('package_id', $data['package_id'])
+  //     ->first();
+
+  //   if ($existingBooking) {
+  //     return [
+  //       'success' => false,
+  //       'message' => 'You have already booked this package'
+  //     ];
+  //   }
+
+  //   $paymentResult = $this->paymentService->processPayment([
+  //     'stripeToken' => $data['stripeToken'],
+  //     'amount'      => $data['amount']
+  //   ]);
+
+  //   if (!$paymentResult['success']) {
+  //     return [
+  //       'success' => false,
+  //       'message' => 'Payment failed',
+  //       'error'   => $paymentResult['error'] ?? null
+  //     ];
+  //   }
+
+  //   DB::table('user_packages')->insert([
+  //     'user_id'         => $user->id,
+  //     'package_id'      => $data['package_id'],
+  //     'traveler_name'   => $data['traveler_name'],
+  //     'national_number' => $data['national_number'],
+  //     'created_at'      => now(),
+  //     'updated_at'      => now()
+  //   ]);
+  //   $message = "The selected package has been successfully reserved. Enjoy your journy!";
+  //   app(\App\Services\NotificationService::class)->send_notification($user->id, $message);
+
+  //   return [
+  //     'success'    => true,
+  //     'message'    => 'Booking successful',
+  //     'payment_id' => $paymentResult['payment_id']
+  //   ];
+  // }
+
   public function bookPackage($data)
   {
     $user = Auth::user();
@@ -750,9 +805,23 @@ class UserService
       ];
     }
 
+    $exists = DB::table('user_packages')
+      ->where('package_id', $data['package_id'])
+      ->where('national_number', $data['national_number'])
+      ->exists();
+
+    if ($exists) {
+      return [
+        'success' => false,
+        'message' => 'This traveler has already booked this package'
+      ];
+    }
+
+    $totalAmount = $package->total_price;
+
     $paymentResult = $this->paymentService->processPayment([
       'stripeToken' => $data['stripeToken'],
-      'amount'      => $data['amount']
+      'amount'      => $totalAmount
     ]);
 
     if (!$paymentResult['success']) {
@@ -771,104 +840,141 @@ class UserService
       'created_at'      => now(),
       'updated_at'      => now()
     ]);
-    $message = "The selected package has been successfully reserved. Enjoy your journy!";
+
+    $message = "The selected package has been successfully reserved. Enjoy your journey!";
     app(\App\Services\NotificationService::class)->send_notification($user->id, $message);
 
     return [
       'success'    => true,
       'message'    => 'Booking successful',
-      'payment_id' => $paymentResult['payment_id']
+      'payment_id' => $paymentResult['payment_id'],
+      'total_paid' => $totalAmount
     ];
   }
 
-  public function bookFlight($data)
+  public function bookFlight(array $data)
   {
     $user = Auth::user();
 
-    $flight = Flight::with(['Plane', 'Seat'])
-      ->find($data['flight_id']);
-
-    if (!$flight) {
-      return [
-        'success' => false,
-        'message' => 'Flight not found'
-      ];
+    $outboundFlight = Flight::with(['Plane', 'Seat'])->find($data['flight_id']);
+    if (!$outboundFlight) {
+      return ['success' => false, 'message' => 'Outbound flight not found'];
     }
 
-    $existingBooking = User_flight::where('user_id', $user->id)
-      ->where('flight_id', $data['flight_id'])
-      ->first();
-
-    if ($existingBooking) {
-      return [
-        'success' => false,
-        'message' => 'You have already booked this flight'
-      ];
+    $returnFlight = null;
+    if (!empty($data['return_flight_id'])) {
+      $returnFlight = Flight::with(['Plane', 'Seat'])->find($data['return_flight_id']);
+      if (!$returnFlight) {
+        return ['success' => false, 'message' => 'Return flight not found'];
+      }
     }
 
-    if ($data['seat_number'] > $flight->Plane->seats_count) {
-      return [
-        'success' => false,
-        'message' => 'Seat number exceeds plane capacity'
+    $totalPrice = 0;
+    $seatsToReserve = [];
+
+    foreach ($data['passengers'] as $passenger) {
+
+      $existsOutbound = User_flight::where('flight_id', $outboundFlight->id)
+        ->where('national_number', $passenger['national_number'])
+        ->exists();
+
+      if ($existsOutbound) {
+        return [
+          'success' => false,
+          'message' => "Passenger with national number {$passenger['national_number']} is already booked on outbound flight"
+        ];
+      }
+
+      $seatOutbound = $outboundFlight->Seat()
+        ->where('seat_number', $passenger['seat_number_outbound'])
+        ->first();
+
+      if (!$seatOutbound) {
+        return ['success' => false, 'message' => "Seat {$passenger['seat_number_outbound']} not found on outbound flight"];
+      }
+
+      if ($seatOutbound->reserved) {
+        return ['success' => false, 'message' => "Seat {$passenger['seat_number_outbound']} is already reserved on outbound flight"];
+      }
+
+      $totalPrice += floatval($seatOutbound->price);
+      $seatsToReserve[] = [
+        'flight_id'       => $outboundFlight->id,
+        'traveler_name'   => $passenger['traveler_name'],
+        'national_number' => $passenger['national_number'],
+        'seat'            => $seatOutbound,
+        'seat_number'     => $passenger['seat_number_outbound'],
+        'price'           => floatval($seatOutbound->price)
       ];
+
+      if ($returnFlight) {
+
+        $existsReturn = User_flight::where('flight_id', $returnFlight->id)
+          ->where('national_number', $passenger['national_number'])
+          ->exists();
+
+        if ($existsReturn) {
+          return [
+            'success' => false,
+            'message' => "Passenger with national number {$passenger['national_number']} is already booked on return flight"
+          ];
+        }
+
+        $seatReturn = $returnFlight->Seat()
+          ->where('seat_number', $passenger['seat_number_return'])
+          ->first();
+
+        if (!$seatReturn) {
+          return ['success' => false, 'message' => "Seat {$passenger['seat_number_return']} not found on return flight"];
+        }
+
+        if ($seatReturn->reserved) {
+          return ['success' => false, 'message' => "Seat {$passenger['seat_number_return']} is already reserved on return flight"];
+        }
+
+        $totalPrice += floatval($seatReturn->price);
+        $seatsToReserve[] = [
+          'flight_id'       => $returnFlight->id,
+          'traveler_name'   => $passenger['traveler_name'],
+          'national_number' => $passenger['national_number'],
+          'seat'            => $seatReturn,
+          'seat_number'     => $passenger['seat_number_return'],
+          'price'           => floatval($seatReturn->price)
+        ];
+      }
     }
-
-    $seat = $flight->Seat()
-      ->where('seat_number', $data['seat_number'])
-      ->first();
-
-    if (!$seat) {
-      return [
-        'success' => false,
-        'message' => 'Seat not found'
-      ];
-    }
-
-    if ($seat->reserved) {
-      return [
-        'success' => false,
-        'message' => 'Seat is already reserved'
-      ];
-    }
-
-    $seatPrice = floatval($seat->price);
-
     $paymentResult = $this->paymentService->processPayment([
       'stripeToken' => $data['stripeToken'],
-      'amount'      => $seatPrice
+      'amount'      => $totalPrice
     ]);
 
     if (!$paymentResult['success']) {
-      return [
-        'success' => false,
-        'message' => 'Payment failed',
-        'error'   => $paymentResult['error'] ?? null
-      ];
+      return ['success' => false, 'message' => 'Payment failed'];
     }
 
-    DB::transaction(function () use ($user, $data, $seat, $seatPrice) {
-      User_flight::create([
-        'user_id'         => $user->id,
-        'flight_id'       => $data['flight_id'],
-        'traveler_name'   => $data['traveler_name'],
-        'national_number' => $data['national_number'],
-        'seat_number'     => $data['seat_number'],
-        'price'           => $seatPrice,
-        'created_at'      => now(),
-        'updated_at'      => now()
-      ]);
+    DB::transaction(function () use ($seatsToReserve, $user) {
+      foreach ($seatsToReserve as $item) {
+        User_flight::create([
+          'user_id'         => $user->id,
+          'flight_id'       => $item['flight_id'],
+          'traveler_name'   => $item['traveler_name'],
+          'national_number' => $item['national_number'],
+          'seat_number'     => $item['seat_number'],
+          'price'           => $item['price'],
+          'created_at'      => now(),
+          'updated_at'      => now()
+        ]);
 
-      $seat->update(['reserved' => true]);
+        $item['seat']->update(['reserved' => true]);
+      }
     });
-
-    $message = "The flight {$flight->flight_number} has been successfully reserved in {$flight->date}. Enjoy your flight!";
-    app(\App\Services\NotificationService::class)->send_notification($user->id, $message);
-
     return [
-      'success'     => true,
-      'message'     => 'Flight booking successful',
-      'payment_id'  => $paymentResult['payment_id'],
-      'total_price' => $seatPrice
+      'success' => true,
+      'message' => $returnFlight
+        ? 'Outbound and return flights booked successfully'
+        : 'Outbound flight booked successfully',
+      'total_price' => $totalPrice,
+      'data' => $seatsToReserve
     ];
   }
 }
