@@ -70,6 +70,7 @@ class UserRequest extends FormRequest
           'stripeToken'     => 'required|string',
           'traveler_name'   => 'required|string|max:255',
           'national_number' => 'required|string|max:50',
+          'payment_method' => 'required|string'
         ];
 
       case 'book_flight':
