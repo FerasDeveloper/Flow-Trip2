@@ -62,6 +62,16 @@ class UserController extends Controller
     return response()->json($this->userservice->filter_accommodation($request->validated()));
   }
 
+  public function accommodation_details($id)
+  {
+    return response()->json($this->userservice->accommodation_details($id));
+  }
+
+  public function room_details($id)
+  {
+    return response()->json($this->userservice->room_details($id));
+  }
+
   public function book_room(UserRequest $request, $id)
   {
     try {
@@ -76,7 +86,6 @@ class UserController extends Controller
       }
 
       $payment = $this->paymentService->processPayment($validatedData);
-      
       if ($payment['success'] == true) {
         unset($validatedData['stripeToken'], $validatedData['amount']);
 
