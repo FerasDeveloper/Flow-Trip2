@@ -22,13 +22,13 @@ class GeneralTaskController extends Controller
         $this->service = $service;
     }
 
-    public function who_am_i()
-    {
-        $data = $this->service->who_am_i();
-        return response()->json([
-            'data' => $data
-        ]);
-    }
+    // public function who_am_i()
+    // {
+    //     $data = $this->service->who_am_i();
+    //     return response()->json([
+    //         'data' => $data
+    //     ]);
+    // }
 
     public function get_all_owners_categories()
     {

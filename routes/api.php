@@ -44,6 +44,8 @@ Route::get('/getActivity', [UserController::class, 'getActivity']);
 Route::get('/getRandomActivity', [UserController::class, 'getRandomActivity']);
 Route::get('/getRandomAccommodations', [UserController::class, 'getRandomAccommodations']);
 Route::post('/FilterAccommodation', [UserController::class, 'filter_accommodation']);
+
+Route::get('/getAllActivity', [AdminController::class, 'getAllActivity']);
 Route::get('/AccommodationDetails/{id}', [UserController::class, 'accommodation_details']);
 Route::get('/RoomDetails/{id}', [UserController::class, 'room_details']);
 Route::get('/GetAllActivities', [UserController::class, 'get_all_activities']);
@@ -67,7 +69,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
   Route::get('/getallpackage', [AdminController::class, 'getAllPackages']);
   Route::get('/getPackage/{id}', [AdminController::class, 'getPackage']);
-  Route::get('/getAllActivity', [AdminController::class, 'getAllActivity']);
   Route::post('/addActivity', [AdminController::class, 'addActivity']);
   Route::delete('/deleteactivity/{id}', [AdminController::class, 'deleteactivity']);
   Route::get('/paybypoint/{id}', [AdminController::class, 'paybypoint']);
