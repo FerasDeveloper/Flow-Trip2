@@ -205,6 +205,8 @@ class AirLineService
         $offerPrice = $flight->offer_price;
         if ($request->has('offer_price')) {
             $offerPrice = $request['offer_price'];
+
+            Seat::where('flight_id', $id)->update(['price' => $offerPrice]);
         }
 
         Flight::where('id', $id)->update([
