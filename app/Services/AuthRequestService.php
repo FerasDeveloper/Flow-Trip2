@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Models\Vehicle_owner;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Mail;
 
 class AuthRequestService
 {
@@ -161,6 +162,24 @@ class AuthRequestService
     $user0->update([
       'status' => 0
     ]);
+
+    $emailBody = "Dear {$user0->name},
+
+    We are pleased to inform you that your account registration request has been approved by our Admin Team.
+    
+    You can now access your account by clicking on the link below:
+    http://127.0.0.1:3000/register
+    
+    We appreciate your patience and understanding of our terms and conditions.
+    
+    Best regards,
+    Flow Trip Team";
+
+    Mail::raw($emailBody, function ($message) use ($user0) {
+      $message
+        ->to($user0->email)
+        ->subject('Flow Trip - Account Approved');
+    });
 
     $request->delete();
     return [

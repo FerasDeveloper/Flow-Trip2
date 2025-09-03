@@ -48,6 +48,7 @@ Route::post('/FilterAccommodation', [UserController::class, 'filter_accommodatio
 Route::get('/getAllActivity', [AdminController::class, 'getAllActivity']);
 Route::get('/AccommodationDetails/{id}', [UserController::class, 'accommodation_details']);
 Route::get('/RoomDetails/{id}', [UserController::class, 'room_details']);
+Route::get('/GetAllActivities', [UserController::class, 'get_all_activities']);
 
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -135,13 +136,13 @@ Route::middleware('auth:sanctum')->group(function () {
   // User
   Route::post('/BookRoom/{id}', [UserController::class, 'book_room']);
   Route::post('/BookAccommodation/{id}', [UserController::class, 'book_accommodation']);
+  Route::post('/book_package', [UserController::class, 'book_package']);
+  Route::post('/book_flight', [UserController::class, 'book_flight']);
 
   // Notifications
   Route::get('/GetAllNotifications', [NotificationController::class, 'get_all_notifications']);
 
 
-  Route::post('/book_package', [UserController::class, 'book_package']);
-  Route::post('/book_flight', [UserController::class, 'book_flight']);
 
 
   // tourism company

@@ -1220,4 +1220,10 @@ class UserService
       'data' => $seatsToReserve
     ];
   }
+
+  public function get_all_activities(){
+    $activities = Activity::query()->get();
+    return $activities;
+  }
+
 }
