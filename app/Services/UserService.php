@@ -911,4 +911,10 @@ class UserService
       'total_price' => $seatPrice
     ];
   }
+
+  public function get_all_activities(){
+    $activities = Activity::query()->get();
+    return $activities;
+  }
+
 }
