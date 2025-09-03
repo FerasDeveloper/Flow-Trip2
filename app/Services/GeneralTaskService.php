@@ -17,6 +17,7 @@ use App\Models\Package;
 use App\Models\Package_element;
 use App\Models\Picture;
 use App\Models\Plan_type;
+use App\Models\Rate;
 use App\Models\Room;
 use App\Models\Room_picture;
 use App\Models\Service;
@@ -300,5 +301,21 @@ class GeneralTaskService
     return [
       'message' => 'Profile updated successfully'
     ];
+  }
+  public function rateOwner(array $data)
+  {
+    $userId = Auth::id();
+
+    $rate = Rate::updateOrCreate(
+      [
+        'user_id'  => $userId,
+        'owner_id' => $data['owner_id'],
+      ],
+      [
+        'rating'   => $data['rating'],
+      ]
+    );
+
+    return $rate;
   }
 }

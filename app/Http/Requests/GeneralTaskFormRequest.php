@@ -57,7 +57,10 @@ class GeneralTaskFormRequest extends FormRequest
           'country_id' => 'required|numeric'
         ];
       })(),
-
+      'rate_owner' => [
+        'owner_id' => 'required|exists:users,id',
+        'rating'   => 'required|numeric|min:1|max:5',
+      ],
       default => [],
     };
   }

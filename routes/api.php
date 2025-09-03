@@ -116,7 +116,7 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::get('/DeleteService/{service_id}', [GeneralTaskController::class, 'delete_service']);
   Route::get('/ShowProfile', [GeneralTaskController::class, 'show_profile']);
   Route::post('/EditProfile', [GeneralTaskController::class, 'edit_profile']);
-
+  Route::post('/rate-owner', [GeneralTaskController::class, 'rate_owner']);
   // Accommodation
   Route::get('/ShowAccommodationRecords', [AccommodationController::class, 'show_records']);
   Route::get('/ShowOldAccommodationRecords', [AccommodationController::class, 'show_old_records']);
