@@ -49,6 +49,7 @@ Route::get('/getAllActivity', [AdminController::class, 'getAllActivity']);
 Route::get('/AccommodationDetails/{id}', [UserController::class, 'accommodation_details']);
 Route::get('/RoomDetails/{id}', [UserController::class, 'room_details']);
 Route::get('/GetAllActivities', [UserController::class, 'get_all_activities']);
+Route::get('/getPackage/{id}', [AdminController::class, 'getPackage']);
 
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -68,7 +69,6 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::get('/DeleteRequest/{id}', [AdminController::class, 'delete_request']);
 
   Route::get('/getallpackage', [AdminController::class, 'getAllPackages']);
-  Route::get('/getPackage/{id}', [AdminController::class, 'getPackage']);
   Route::post('/addActivity', [AdminController::class, 'addActivity']);
   Route::delete('/deleteactivity/{id}', [AdminController::class, 'deleteactivity']);
   Route::get('/paybypoint/{id}', [AdminController::class, 'paybypoint']);
