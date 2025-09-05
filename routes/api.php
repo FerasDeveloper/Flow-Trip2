@@ -141,7 +141,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
   // Notifications
   Route::get('/GetAllNotifications', [NotificationController::class, 'get_all_notifications']);
-
+  Route::get('/GetNewNotificationsCount', [NotificationController::class, 'new_notifications_count']);
 
 
 

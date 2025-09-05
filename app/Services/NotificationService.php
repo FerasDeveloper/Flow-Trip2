@@ -36,6 +36,13 @@ class NotificationService
         return ['notificatios' => $notificatios]; 
     }
 
+    public function new_notifications_count()
+    {
+        $user = Auth::user();
+        $notificatios = Notification::where('user_id', $user->id)->where('message_status', false)->count();
+        return $notificatios;
+    }
+
     public function send_flight_reminders()
     {
         $today = Carbon::now('Asia/Damascus');
