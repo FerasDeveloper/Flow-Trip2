@@ -76,10 +76,10 @@ class AdminController extends Controller
 
   public function getAllPackages()
   {
-    $user = Auth::user();
-    if (!in_array($user['role_id'], [1, 2])) {
-      return response()->json(['message' => 'Authorization required']);
-    }
+    // $user = Auth::user();
+    // if (!in_array($user['role_id'], [1, 2])) {
+    //   return response()->json(['message' => 'Authorization required']);
+    // }
     $allpackages = Package::with('tourism_company')->get();
 
     return response()->json([
@@ -89,11 +89,49 @@ class AdminController extends Controller
     ]);
   }
 
+  // public function getPackage($id)
+  // {
+  //   $package = Package::with([
+  //     'package_element.package_element_picture',
+  //     'tourism_company'
+  //   ])->find($id);
+
+  //   if (!$package) {
+  //     return response()->json([
+  //       'error' => 'not found'
+  //     ], 404);
+  //   }
+
+  //   if ($package->package_picture) {
+  //     $package->package_picture = asset('storage/' . $package->package_picture);
+  //   }
+
+  //   if ($package->package_element) {
+  //     foreach ($package->package_element as $element) {
+  //       if ($element->package_element_picture) {
+  //         foreach ($element->package_element_picture as $pic) {
+  //           if ($pic->picture_path) {
+  //             $pic->picture_path = asset('storage/' . $pic->picture_path);
+  //           }
+  //         }
+  //       }
+  //     }
+  //   }
+
+  //   return response()->json([
+  //     'message' => 'success',
+  //     'data' => $package,
+  //     'status' => 200
+  //   ]);
+  // }
+
+
+
   public function getPackage($id)
   {
     $package = Package::with([
       'package_element.package_element_picture',
-      'tourism_company'
+      'tourism_company.owner.user' // تحميل بيانات اليوزر
     ])->find($id);
 
     if (!$package) {
@@ -102,10 +140,12 @@ class AdminController extends Controller
       ], 404);
     }
 
+    // تعديل رابط صورة الباقة
     if ($package->package_picture) {
       $package->package_picture = asset('storage/' . $package->package_picture);
     }
 
+    // تعديل روابط صور عناصر الباقة
     if ($package->package_element) {
       foreach ($package->package_element as $element) {
         if ($element->package_element_picture) {
@@ -131,7 +171,9 @@ class AdminController extends Controller
     $package = Package::find($id);
 
     if ($package) {
-      $package->payment_by_points = true;
+      // $package->payment_by_points = true;
+      $package->payment_by_points = !$package->payment_by_points;
+
 
       $package->save();
 
