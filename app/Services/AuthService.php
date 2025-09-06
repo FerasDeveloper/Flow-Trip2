@@ -55,7 +55,7 @@ class AuthService
     if ($user['role_id'] == 3) {
       $this->send_notification($user->id);
       $user['token'] = $user->createToken('AccessToken')->plainTextToken;
-      return ['token' => $user['token']];
+      return ['token' => $user['token'], 'id' => $user->id];
     }
      else if ($user['role_id'] == 4) {
       $user->update(['status' => 1]);

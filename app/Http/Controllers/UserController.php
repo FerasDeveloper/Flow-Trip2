@@ -249,4 +249,8 @@ class UserController extends Controller
       'data' => $bookings
     ]);
   }
+  public function get_all_accommodation(){
+    return response()->json($this->userservice->get_all_accommodation());
+  }
+
 }

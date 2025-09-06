@@ -8,6 +8,7 @@ use App\Models\Activity;
 use App\Models\Activity_owner;
 use App\Models\Flight;
 use App\Models\Owner;
+use App\Models\Owner_category;
 use App\Models\Owner_service;
 use App\Models\Package;
 use App\Models\Package_element;
@@ -28,6 +29,8 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Exception;
+
+use function PHPUnit\Framework\isEmpty;
 
 class UserService
 {
@@ -256,6 +259,7 @@ class UserService
 
       $availableOthers = $availableOthers->map(function ($other) {
         $other['location'] = Owner::query()->where('id', $other->owner_id)->pluck('location')[0];
+        $other['type'] = Accommodation_type::query()->where('id', $other->accommodation_type_id)->pluck('name')[0];
 
         $firstPicture = Picture::query()
           ->where('owner_id', $other->owner_id)
@@ -676,6 +680,51 @@ class UserService
       ];
     });
   }
+
+  public function get_all_accommodation()
+  {
+    $accommodations = Accommodation::query()->get();
+    $hotels = collect([]);
+    $others = collect([]);
+    foreach ($accommodations as $accommodation) {
+      if ($accommodation->accommodation_type_id == 1) {
+        $hotels->push($accommodation);
+      } else {
+        $others->push($accommodation);
+      }
+    }
+
+    foreach ($hotels as $hotel) {
+      $owner = Owner::query()->where('id', $hotel->owner_id)->first();
+      $hotel['location'] = $owner->location;
+      $rooms = Room::query()->where('accommodation_id', $hotel->id)->get();
+      foreach ($rooms as $room) {
+        $firstPicture = Room_picture::query()
+          ->where('room_id', $room->id)
+          ->orderBy('id', 'asc')
+          ->value('room_picture');
+        $room['picture'] = $firstPicture ? asset($firstPicture) : '';
+      }
+      $hotel['rooms'] = $rooms;
+    }
+
+    foreach ($others as $other) {
+      $owner = Owner::query()->where('id', $other->owner_id)->first();
+      $other['location'] = $owner->location;
+      $other['type'] = Accommodation_type::query()->where('id', $other->accommodation_type_id)->pluck('name')[0];
+      $firstPicture = Picture::query()
+        ->where('owner_id', $other->owner_id)
+        ->orderBy('id', 'asc')
+        ->value('reference');
+      $other['picture'] = $firstPicture ? asset($firstPicture) : '';
+    }
+
+    return [
+      'hotels' => $hotels,
+      'others' => $others
+    ];
+  }
+
   public function filterActivities(array $filters)
   {
     $query = Activity_owner::query()
@@ -1215,6 +1264,9 @@ class UserService
       $user->save();
     });
 
+    $message = "The flight {$outboundFlight->flight_number} has been successfully reserved in {$outboundFlight->date}. Enjoy your flight!";
+    app(\App\Services\NotificationService::class)->send_notification($user->id, $message);
+
     return [
       'success' => true,
       'message' => $returnFlight
@@ -1295,4 +1347,5 @@ class UserService
       ->merge($flights)
       ->merge($accommodations);
   }
+
 }

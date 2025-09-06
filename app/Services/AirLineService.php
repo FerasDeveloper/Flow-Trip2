@@ -256,10 +256,11 @@ class AirLineService
 
     public function get_flight_details($id)
     {
+        $user = Auth::user();
         $flight = Flight::where('id', $id)->first();
         $seats = Seat::where('flight_id', $id)->get();
 
-        return ['flight' => $flight, 'seats' => $seats];
+        return ['flight' => $flight, 'seats' => $seats, 'user_id' => $user->id];
     }
 
     public function delete_flight($id)
