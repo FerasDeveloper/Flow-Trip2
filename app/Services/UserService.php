@@ -1211,6 +1211,9 @@ class UserService
       $user->save();
     });
 
+    $message = "The flight {$outboundFlight->flight_number} has been successfully reserved in {$outboundFlight->date}. Enjoy your flight!";
+    app(\App\Services\NotificationService::class)->send_notification($user->id, $message);
+
     return [
       'success' => true,
       'message' => $returnFlight
