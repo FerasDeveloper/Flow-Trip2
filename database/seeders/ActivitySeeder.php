@@ -34,7 +34,6 @@ class ActivitySeeder extends Seeder
             'Tour Guide',
             'Photography',
             'Videography',
-            'Translation'
         ];
 
         foreach ($activities as $activity) {

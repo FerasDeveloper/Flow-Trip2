@@ -239,4 +239,8 @@ class UserController extends Controller
     return response()->json($this->userservice->get_all_activities());
   }
 
+  public function get_all_accommodation(){
+    return response()->json($this->userservice->get_all_accommodation());
+  }
+
 }
