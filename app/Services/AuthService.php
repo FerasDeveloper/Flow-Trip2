@@ -167,7 +167,8 @@ class AuthService
         'token' => $user['token'],
         'name' => $user['name'],
         'id' => $user['id'],
-        'role' => $roleInfo['role']
+        'role' => $roleInfo['role'],
+        'email'=>$user['email']
       ];
 
       return $responseData;

@@ -154,7 +154,7 @@ class AdminService
     return $data;
   }
 
-    public function toggleBlockStatus($id)
+  public function toggleBlockStatus($id)
   {
     $this->ensureAdmin();
     $user = User::find($id);
@@ -257,4 +257,167 @@ class AdminService
       return ['message' => 'No Result'];
     }
   }
+
+  public function getAllPackages()
+  {
+    return Package::with('tourism_company')->get();
+  }
+
+  public function getPackage($id)
+  {
+    $package = Package::with([
+      'package_element.package_element_picture',
+      'tourism_company.owner.user'
+    ])->find($id);
+
+    if (!$package) {
+      return null;
+    }
+
+    if ($package->package_picture) {
+      $package->package_picture = asset('storage/' . $package->package_picture);
+    }
+
+    if ($package->package_element) {
+      foreach ($package->package_element as $element) {
+        if ($element->package_element_picture) {
+          foreach ($element->package_element_picture as $pic) {
+            if ($pic->picture_path) {
+              $pic->picture_path = asset('storage/' . $pic->picture_path);
+            }
+          }
+        }
+      }
+    }
+
+    return $package;
+  }
+
+
+  public function togglePayByPoint($id)
+  {
+    $package = Package::find($id);
+
+    if (!$package) {
+      return null;
+    }
+
+    $package->payment_by_points = !$package->payment_by_points;
+    $package->save();
+
+    return $package;
+  }
+
+  public function getAllUsers()
+  {
+    $users = User::query()
+      ->where('role_id', 3)
+      ->get();
+
+    return $users;
+  }
+
+  public function filterUsers($name)
+  {
+    return User::query()
+      ->where('name', 'like', '%' . $name . '%')
+      ->where('role_id', 3)
+      ->get();
+  }
+
+  public function filterSubAdmins($name)
+  {
+    return User::query()
+      ->where('name', 'like', '%' . $name . '%')
+      ->where('role_id', 2)
+      ->get();
+  }
+
+  public function createSubAdmin($id)
+  {
+    $user = User::find($id);
+
+    if (!$user) {
+      return null; // نخلي الكنترولر يتعامل مع حالة عدم الوجود
+    }
+
+    $user->role_id = 2;
+    $user->save();
+
+    return $user;
+  }
+
+  public function getAllSubAdmins()
+  {
+    return User::where('role_id', 2)->get();
+  }
+  public function removeSubAdmin($id)
+  {
+    $user = User::find($id);
+
+    if (!$user) {
+      return null; // نخلي الكنترولر يتعامل مع حالة عدم الوجود
+    }
+
+    $user->role_id = 3; // إرجاعه لدور المستخدم العادي
+    $user->save();
+
+    return $user;
+  }
+
+  public function getAllActivity()
+  {
+    return Activity::all();
+  }
+
+  public function addActivity($name)
+  {
+    if (Activity::where('name', $name)->exists()) {
+      return [
+        'exists' => true,
+        'activity' => null
+      ];
+    }
+
+    $activity = new Activity();
+    $activity->name = $name;
+    $activity->save();
+
+    return [
+      'exists' => false,
+      'activity' => $activity
+    ];
+  }
+
+  public function deleteActivity($id)
+  {
+    $activity = Activity::find($id);
+
+    if (!$activity) {
+      return null;
+    }
+
+    $activity->delete();
+
+    return true;
+  }
+
+  public function addCategory($name)
+    {
+        if (Owner_category::where('name', $name)->exists()) {
+            return [
+                'exists' => true,
+                'category' => null
+            ];
+        }
+
+        $category = new Owner_category();
+        $category->name = $name;
+        $category->save();
+
+        return [
+            'exists' => false,
+            'category' => $category
+        ];
+    }
 }
