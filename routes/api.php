@@ -138,7 +138,7 @@ Route::middleware('auth:sanctum')->group(function () {
   Route::post('/BookAccommodation/{id}', [UserController::class, 'book_accommodation']);
   Route::post('/book_package', [UserController::class, 'book_package']);
   Route::post('/book_flight', [UserController::class, 'book_flight']);
-
+  Route::get('/getBookings', [UserController::class, 'getBookings']);
   // Notifications
   Route::get('/GetAllNotifications', [NotificationController::class, 'get_all_notifications']);
   Route::get('/GetNewNotificationsCount', [NotificationController::class, 'new_notifications_count']);

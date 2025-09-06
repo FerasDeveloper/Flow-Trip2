@@ -235,8 +235,18 @@ class UserController extends Controller
     return response()->json($result, $result['success'] ? 200 : 400);
   }
 
-  public function get_all_activities(){
+  public function get_all_activities()
+  {
     return response()->json($this->userservice->get_all_activities());
   }
 
+  public function getBookings()
+  {
+    $bookings = $this->userservice->getAllBookings();
+
+    return response()->json([
+      'success' => true,
+      'data' => $bookings
+    ]);
+  }
 }

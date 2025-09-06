@@ -1225,9 +1225,74 @@ class UserService
     ];
   }
 
-  public function get_all_activities(){
+  public function get_all_activities()
+  {
     $activities = Activity::query()->get();
     return $activities;
   }
 
+  public function getAllBookings()
+  {
+    $user = Auth::user();
+
+    // حجوزات الغرف
+    $rooms = DB::table('user_rooms')
+      ->join('rooms', 'user_rooms.room_id', '=', 'rooms.id')
+      ->where('user_rooms.user_id', $user->id)
+      ->select(
+        'user_rooms.traveler_name',
+        'user_rooms.national_number',
+        'user_rooms.start_date',
+        'user_rooms.end_date',
+        'rooms.*',
+        DB::raw("'room' as booking_type")
+      )
+      ->get();
+
+    // حجوزات الباكجات
+    $packages = DB::table('user_packages')
+      ->join('packages', 'user_packages.package_id', '=', 'packages.id')
+      ->where('user_packages.user_id', $user->id)
+      ->select(
+        'user_packages.traveler_name',
+        'user_packages.national_number',
+        'packages.*',
+        DB::raw("'package' as booking_type")
+      )
+      ->get();
+
+    // حجوزات الرحلات
+    $flights = DB::table('user_flights')
+      ->join('flights', 'user_flights.flight_id', '=', 'flights.id')
+      ->where('user_flights.user_id', $user->id)
+      ->select(
+        'user_flights.traveler_name',
+        'user_flights.national_number',
+        'user_flights.seat_number',
+        'user_flights.price',
+        'flights.*',
+        DB::raw("'flight' as booking_type")
+      )
+      ->get();
+
+    // حجوزات الإقامات
+    $accommodations = DB::table('user_accommodations')
+      ->join('accommodations', 'user_accommodations.accommodation_id', '=', 'accommodations.id')
+      ->where('user_accommodations.user_id', $user->id)
+      ->select(
+        'user_accommodations.traveler_name',
+        'user_accommodations.national_number',
+        'user_accommodations.start_date',
+        'user_accommodations.end_date',
+        'accommodations.*',
+        DB::raw("'accommodation' as booking_type")
+      )
+      ->get();
+
+    // دمج الكل
+    return $rooms
+      ->merge($packages)
+      ->merge($flights)
+      ->merge($accommodations);
+  }
 }
