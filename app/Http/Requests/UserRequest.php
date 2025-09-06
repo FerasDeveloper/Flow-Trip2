@@ -67,7 +67,7 @@ class UserRequest extends FormRequest
       case 'book_package':
         return [
           'package_id'      => 'required|integer|exists:packages,id',
-          'stripeToken'     => 'required|string',
+          'stripeToken'     => 'nullable|string',
           'traveler_name'   => 'required|string|max:255',
           'national_number' => 'required|string|max:50',
           'payment_method' => 'required|string'
@@ -79,7 +79,7 @@ class UserRequest extends FormRequest
           'return_flight_id'   => 'nullable|integer|exists:flights,id', // إذا الإياب اختياري
           'stripeToken'        => 'required|string',
 
-          'passengers' => 'required|array|min:1',
+          // 'passengers' => 'required|array|min:1',
 
           'passengers.*.traveler_name'        => 'required|string|max:255',
           'passengers.*.national_number'      => 'required|string|max:50',
@@ -134,7 +134,6 @@ class UserRequest extends FormRequest
         return [
           'user_id.required'         => 'User ID required.',
           'package_id.required'      => 'Package ID is required.',
-          'stripeToken.required'     => 'Payment code is required.',
           'amount.required'          => 'Amount required.',
           'traveler_name.required'   => 'Traveler name is required.',
           'national_number.required' => 'National ID is required.',

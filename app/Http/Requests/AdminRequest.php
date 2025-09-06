@@ -31,6 +31,22 @@ class AdminRequest extends FormRequest
           'name' => 'string',
           'category_id'  => 'numeric',
         ];
+      case 'filterUsers':
+        return [
+          'name' => 'required|string|min:1',
+        ];
+      case 'filterSubAdmins':
+        return [
+          'name' => 'required|string|min:1',
+        ];
+      case 'addActivity':
+        return [
+          'name' => 'required|string|max:255'
+        ];
+      case 'addCategory':
+        return [
+          'name' => 'required|string|max:255|unique:owner_categories,name'
+        ];
 
       default:
         return [];
