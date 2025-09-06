@@ -44,6 +44,7 @@ Route::get('/getActivity', [UserController::class, 'getActivity']);
 Route::get('/getRandomActivity', [UserController::class, 'getRandomActivity']);
 Route::get('/getRandomAccommodations', [UserController::class, 'getRandomAccommodations']);
 Route::post('/FilterAccommodation', [UserController::class, 'filter_accommodation']);
+Route::get('/getAllAccommodation', [UserController::class, 'get_all_accommodation']);
 
 Route::get('/getAllActivity', [AdminController::class, 'getAllActivity']);
 Route::get('/AccommodationDetails/{id}', [UserController::class, 'accommodation_details']);
